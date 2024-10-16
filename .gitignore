@@ -166,7 +166,11 @@ ScaffoldingReadMe.txt
 
 # Dataset
 data/
+dataset/
 !data/.gitkeep
+
+# wandb
+wandb/
 
 # Results and outputs
 results/

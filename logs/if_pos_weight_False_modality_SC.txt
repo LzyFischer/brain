@@ -1,0 +1,48 @@
+wandb: Currently logged in as: vjd5zr. Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.18.2 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.16.6
+wandb: Run data is saved locally in /home/zhenyu/program/Brain/wandb/run-20240929_003714-urfdzzwf
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run poswFalse_modSC_lr0.01
+wandb: ⭐️ View project at https://wandb.ai/vjd5zr/brain
+wandb: 🚀 View run at https://wandb.ai/vjd5zr/brain/runs/urfdzzwf
+2024-09-29 00:37:15 [logger2] INFO Namespace(lr=0.01, batch_size=64, max_epochs=100, L2=0.0001, dropout=0.1, seed=100, config='GIN_classification', task='classification', x_attributes=['FC', 'SC'], y_attribute=['nih_crycogcomp_ageadjusted', 'nih_fluidcogcomp_ageadjusted'], attributes_group=['Age in year'], train_val_test=[0.7, 0.1, 0.2], dataset='dglHCP', sparse=30, gl=False, weight_score=[0.5, 0.5], if_pos_weight=False, modality='SC')
+2024-09-29 00:37:15 [logger2] INFO {'model': 'GIN_pyg', 'model_save_suffix': 'GIN_pyg', 'pretrain': False, 'pretrain_model_name_comment': 'hcdp/pretrained/2023_10_30_19_10dglHCP_GIN_GIN_regression_30.pth', 'net_params': {'num_layers': 3, 'in_channels': 379, 'hidden_channels': 64, 'out_channels': 64, 'dropout': 0.1, 'n_vars': 1, 'activation': 'relu', 'readout': 'mean', 'additional_feature': 0}, 'dataset': 'dglHCP'}
+/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/torch_geometric/data/in_memory_dataset.py:300: UserWarning: It is not recommended to directly access the internal storage format `data` of an 'InMemoryDataset'. If you are absolutely certain what you are doing, access the internal storage via `InMemoryDataset._data` instead to suppress this warning. Alternatively, you can access stacked individual attributes of every graph via `dataset.{attr_name}`.
+  warnings.warn(msg)
+2024-09-29 00:37:19 [logger2] INFO ############################################################
+2024-09-29 00:37:20 [logger2] INFO GIN_pyg(
+  (layers): ModuleList(
+    (0): GINConv(nn=Sequential(
+      (0): Linear(in_features=379, out_features=64, bias=True)
+      (1): ReLU()
+    ))
+    (1-2): 2 x GINConv(nn=Sequential(
+      (0): Linear(in_features=64, out_features=64, bias=True)
+      (1): ReLU()
+    ))
+  )
+  (dropout): Dropout(p=0.1, inplace=False)
+  (predict): Linear(in_features=64, out_features=1, bias=True)
+)
+2024-09-29 00:37:20 [logger2] INFO ------------------------------------------------------------
+2024-09-29 00:37:20 [logger2] INFO EPOCH:0 (lr=0.01)
+Dataset length:  1248
+Training iterations!:   0%|          | 0/14 [00:00<?, ?it/s]Training iterations!:   0%|          | 0/14 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "/home/zhenyu/program/Brain/scripts/main_brain.py", line 264, in <module>
+    main(args)
+  File "/home/zhenyu/program/Brain/scripts/main_brain.py", line 150, in main
+    epoch_loss_train, optimizer = train_epoch(
+  File "/home/zhenyu/program/Brain/scripts/train/train.py", line 65, in train_epoch
+    batch_scores = model(sample_i)
+  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/torch/nn/modules/module.py", line 1501, in _call_impl
+    return forward_call(*args, **kwargs)
+  File "/home/zhenyu/program/Brain/scripts/models/GIN_pyg.py", line 88, in forward
+    x = x_sc
+NameError: name 'x_sc' is not defined
+wandb: - 0.128 MB of 0.128 MB uploadedwandb: \ 0.128 MB of 0.135 MB uploadedwandb: 🚀 View run poswFalse_modSC_lr0.01 at: https://wandb.ai/vjd5zr/brain/runs/urfdzzwf
+wandb: ⭐️ View project at: https://wandb.ai/vjd5zr/brain
+wandb: Synced 6 W&B file(s), 0 media file(s), 0 artifact file(s) and 1 other file(s)
+wandb: Find logs at: ./wandb/run-20240929_003714-urfdzzwf/logs
