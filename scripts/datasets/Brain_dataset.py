@@ -33,7 +33,6 @@ def pre_transform(data: Dict[str, Any]) -> Data:
     x = torch.tensor(data["FC"], dtype=torch.float32)
     # normalize the data
     x = (x - x.mean()) / x.std()
-    pdb.set_trace()
     x_SC = torch.tensor(data["SC"], dtype=torch.float32)
     x_SC = (x_SC - x_SC.mean()) / x_SC.std()
 

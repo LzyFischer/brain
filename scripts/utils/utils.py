@@ -13,7 +13,7 @@ from sklearn.metrics.pairwise import euclidean_distances
 from scipy import sparse as sp
 import dgl
 import torch.nn.functional as F
-from scripts.models.model_loss import weighted_mse_loss, classification_loss
+from models.model_loss import weighted_mse_loss, classification_loss
 from sklearn.metrics import roc_curve, auc, roc_auc_score
 from sklearn.preprocessing import label_binarize
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, accuracy_score, f1_score

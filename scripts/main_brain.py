@@ -96,6 +96,7 @@ def main(args):
     zero_indices = torch.where(dataset.y == 0)[0][: len(non_zero_indices)]
     non_zero_indices = torch.cat((non_zero_indices, zero_indices), dim=0)
     dataset = dataset[non_zero_indices]
+    # pdb.set_trace()
     """modify end"""
     print("Dataset length: ", len(dataset))
 
@@ -110,24 +111,13 @@ def main(args):
     )
     """modify end"""
 
-    if "CT" in args.x_attributes:
-        additional_features = []
-        for idx in train_set.indices:  # Access the original indices from the subset
-            _, g, _ = dataset[idx]  # Use the original dataset to access the data
-            additional_features.append(g.ndata["additional_feature"])
-
-        # Concatenate all additional features from the training set and compute mean and std
-        all_additional_features = torch.cat(additional_features, dim=0)
-        mean = all_additional_features.mean(dim=0)
-        std = all_additional_features.std(dim=0)
-        dataset.mean = mean
-        dataset.std = std
-
+    # Prepare the dataloaders
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
     val_loader = DataLoader(val_set, batch_size=64, shuffle=False)
     test_loader = DataLoader(test_set, batch_size=64, shuffle=False)
     logger.info("#" * 60)
-    # define the model
+
+    # Define the model
     model = load_model(config, args)
     model.to(device)
     logger.info(model)
@@ -136,13 +126,13 @@ def main(args):
         checkpoint = torch.load(abspath(pj("results", config["pretrain_model_name"])))
         model.load_state_dict(checkpoint["model"])
         print("Using pretrained model: ", config["pretrain_model_name"])
-        # optimizer.load_state_dict(checkpoint['optimizer'])
 
+    # Training preparation
     scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, "min", patience=10)
     min_test_loss = 1e12
-
     early_stopping = utils.EarlyStopping(tolerance=10, min_delta=0)
-    # train
+
+    # Training
     for epoch in range(args.max_epochs):
         epoch_loss_train, optimizer = train_epoch(
             model,

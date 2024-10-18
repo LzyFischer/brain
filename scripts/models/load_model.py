@@ -7,13 +7,18 @@ from models.GIN import GIN
 from models.GAT import GAT
 from models.MLP import MLP
 from models.MASKGCN import MASKGCN
-def load_model(config):
+from models.GIN_pyg import GIN_pyg
+import pdb
+
+def load_model(config, args):
     if config['model'] == 'GCN':
         model = GCN(config['net_params'])
     elif config['model'] == 'GIN':
         model = GIN(config['net_params'])
     elif config['model'] == 'GAT':
         model = GAT(config['net_params'])
+    elif config['model'] == 'GIN_pyg':
+        model = GIN_pyg(config['net_params'], args)
     elif config['model'] == 'MLP':
         model = MLP(config['net_params'])
     elif config['model'] == 'Linear':
