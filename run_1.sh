@@ -2,7 +2,7 @@
 
 
 # node
-for task_idx in 1 4 5 7 8 9
+for site in 7 8 9
 do
     for modality in "FC"
     do
@@ -64,16 +64,16 @@ do
                     export CUDA_VISIBLE_DEVICES=$chosen_gpu
 
 
-                    info="task: ${task_idx}, modality: ${modality}"
+                    info="site: ${site}, modality: ${modality}"
 
                     echo "Start ${info}"
-                    output_file="logs/task_${task_idx}_modality_${modality}_site11.txt"
+                    output_file="logs/site)_${site}_modality_${modality}.txt"
 
                     nohup python scripts/main_brain.py \
-                        --task_idx $task_idx \
+                        --site $site \
                         --modality $modality > $output_file 2>&1 &
                     pid=$!
-                    sleep 60
+                    sleep 20
                 done
             done
         done

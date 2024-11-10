@@ -1,3 +1,37 @@
+# 11.09
+## Exp
+1. 删掉bip,missing比较多的列，数据clean，再来做multi-label classification
+   1. 什么是bip?只算几个比较好的病类
+      2. Pos在100以上的其他: OCD,ADHD,ODD,Cond (5,7,8,9)
+   2. 怎么做数据clean？
+      1. label需要吗？先看成0目前看来missing label的数量相对少一点
+      2. input clean。需不需要处理FC数据
+         1.  normalize
+2. Anx考虑subtype的结果
+   1. 把anx拆分成不同的subtype，先看statistics
+3. 考虑longitudinal的预测
+   1. 只需要改变label
+4. 计算一下各个类别的correlation
+
+
+
+
+# 10.18
+## Think
+1. 效果不好的原因是什么？-》数据点太少了，随机性太大了
+   1. 确保loss，metric都是正确的
+   2. 所有的疾病最终都是一个结果？都是55%的acc X
+2. 有过拟合出现-》training和val和test的数据分布不一样？
+   1. 仅仅只是记住了训练数据
+3. 使用mamba来做实验
+   1. 在site11上的效果更好
+4. 数据处理是不是还不够好？
+   1. FC graph
+      1. normalizing方式
+5. 我把site11所有跑一下，然后所有的跑一下.
+
+
+
 # 10.16
 ## Think
 1. 我应该怎么安排aiying的这个project

@@ -4,7 +4,7 @@
 # @FileName: model_loss.py
 import torch.nn.functional as F
 import torch
-
+import pdb
 
 def weighted_mse_loss(output, target, weights=None):
     """
@@ -29,12 +29,17 @@ def weighted_mse_loss(output, target, weights=None):
 
 def classification_loss(output, target):
     """
-    Cross Entropy Loss for classification task.
+    Binary cross-entropy loss for binary classification task.
     Args:
         output: Predicted output from the model.
         target: Ground truth.
     Returns:
         Loss value.
     """
-    return F.cross_entropy(output, target)
+    # return F.binary_cross_entropy_with_logits(output, target)
+    pos_weight = torch.sum(target == 0) / torch.sum(target == 1)
+    loss =  torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)(output, target)
+    if torch.isnan(loss):
+        loss = torch.tensor(0.0, requires_grad=True)
+    return loss
 

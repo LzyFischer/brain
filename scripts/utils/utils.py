@@ -17,6 +17,8 @@ from models.model_loss import weighted_mse_loss, classification_loss
 from sklearn.metrics import roc_curve, auc, roc_auc_score
 from sklearn.preprocessing import label_binarize
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, accuracy_score, f1_score
+import pdb
+
 LOGGING_DIC = {
     'version': 1.0,
     'disable_existing_loggers': False,
@@ -110,7 +112,8 @@ def seed_it(seed):
     torch.manual_seed(seed)
 
 
-def log_metrics(epoch_loss, predicted_scores, target_scores, task_type, phase, epoch, writer, logger):
+
+def log_metrics(epoch_loss, predicted_scores, target_scores, task_type, phase, epoch, writer, logger, multi_label=True):
     if task_type == "regression":
         rmse = evaluate_mat(predicted_scores, target_scores, method='RMSE')
         mae = evaluate_mat(predicted_scores, target_scores, method='MAE')
@@ -125,54 +128,82 @@ def log_metrics(epoch_loss, predicted_scores, target_scores, task_type, phase, e
         predicted_scores = np.concatenate(predicted_scores, axis=0)
 
         # Convert predicted scores to class label
-        predicted_labels = np.argmax(predicted_scores, axis=1)
-        true_labels = np.concatenate(target_scores).ravel()
-
-        correct_predictions = np.sum(predicted_labels == true_labels)
+        # predicted_labels = np.argmax(predicted_scores, axis=1)
+        predicted_labels = np.where(predicted_scores > 0.5, 1, 0).squeeze()
+        true_labels = np.concatenate(target_scores)
+        correct_predictions = np.sum(predicted_labels == true_labels, axis=0)
 
         # Calculate the accuracy
-        accuracy = correct_predictions / len(true_labels) * 100
-
+        # accuracy = correct_predictions / len(true_labels) * 100
+        # accuracy = accuracy_score(true_labels.astype(float), predicted_labels.astype(float))
+        accuracy = correct_predictions.mean() / len(true_labels) * 100
         # Assuming there are n_classes
         n_classes = predicted_scores.shape[1]
-
         # Compute ROC and AUC for either binary or multiclass classification
-        if n_classes == 2:
-            fpr, tpr, _ = roc_curve(true_labels, predicted_scores[:, 1])
+        if n_classes <= 2:
+            fpr, tpr, _ = roc_curve(true_labels, predicted_scores[:, 0])
             roc_auc = auc(fpr, tpr)
             # For Tensorboard: log the curve points
             if writer:
                 writer.add_scalar('Metrics/AUC_' + phase, roc_auc, epoch)
-                for i in range(len(fpr)):
-                    writer.add_scalars('ROC_curve_' + phase,
-                                       {'False Positive Rate': fpr[i], 'True Positive Rate': tpr[i]}, i)
-        else:
-            # Binarize the labels for one-vs-all ROC computation
-            true_labels_bin = label_binarize(true_labels, classes=np.arange(n_classes))
-            false_positive_rate = dict()
-            true_positive_rate = dict()
-            roc_auc = dict()
-            for i in range(n_classes):
-                false_positive_rate[i], true_positive_rate[i], _ = roc_curve(true_labels_bin[:, i],
-                                                                             predicted_scores[:, i])
-                roc_auc[i] = auc(false_positive_rate[i], true_positive_rate[i])
 
-                # For Tensorboard: log the curve points for each class
-                if writer:
-                    writer.add_scalar('Metrics/AUC_class_' + str(i) + "_" + phase, roc_auc[i], epoch)
-                    for j in range(len(false_positive_rate[i])):
-                        writer.add_scalars('ROC_curve_class_' + str(i) + "_" + phase,
-                                           {'False Positive Rate': false_positive_rate[i][j],
-                                            'True Positive Rate': true_positive_rate[i][j]}, j)
+                for i in range(len(fpr)):
+                    writer.add_scalars('ROC_curve_' + phase,{'False Positive Rate': fpr[i], 'True Positive Rate': tpr[i]}, i)
+        else:
+            if multi_label:
+                # Compute ROC and AUC for multilabel classification
+                fpr = dict()
+                tpr = dict()
+                roc_auc = dict()
+                for i in range(n_classes):
+                    # pdb.set_trace()
+                    if true_labels[:, i].sum() == 0:
+                        continue
+                    try:
+                        fpr[i], tpr[i], _ = roc_curve(true_labels[:, i], predicted_scores[:, i])
+                    except:
+                        pdb.set_trace()
+                    if not (np.isnan(fpr[i]).any() or np.isnan(tpr[i]).any()):
+                        roc_auc[i] = auc(fpr[i], tpr[i])
+                        # For Tensorboard: log the curve points for each class
+                        if writer:
+                            writer.add_scalar('Metrics/AUC_class_' + str(i) + "_" + phase, roc_auc[i], epoch)
+                            for j in range(len(fpr[i])):
+                                writer.add_scalars('ROC_curve_class_' + str(i) + "_" + phase,
+                                                {'False Positive Rate': fpr[i][j], 'True Positive Rate': tpr[i][j]}, j)
+
+                # # Log the AUC values
+                # for i in roc_auc.keys():
+                #     log_or_print(f"{phase} Loss: {epoch_loss:.4f}, AUC for class {i} = {roc_auc[i]:.4f}, Accuracy: {accuracy:.2f}%",
+                #                  logger)
+            else:
+                # Binarize the labels for one-vs-all ROC computation
+                true_labels_bin = label_binarize(true_labels, classes=np.arange(n_classes))
+                false_positive_rate = dict()
+                true_positive_rate = dict()
+                roc_auc = dict()
+                for i in range(n_classes):
+                    false_positive_rate[i], true_positive_rate[i], _ = roc_curve(true_labels_bin[:, i],
+                                                                                predicted_scores[:, i])
+                    roc_auc[i] = auc(false_positive_rate[i], true_positive_rate[i])
+
+                    # For Tensorboard: log the curve points for each class
+                    if writer:
+                        writer.add_scalar('Metrics/AUC_class_' + str(i) + "_" + phase, roc_auc[i], epoch)
+                        for j in range(len(false_positive_rate[i])):
+                            writer.add_scalars('ROC_curve_class_' + str(i) + "_" + phase,
+                                            {'False Positive Rate': false_positive_rate[i][j],
+                                                'True Positive Rate': true_positive_rate[i][j]}, j)
 
         # log the AUC values
-        if n_classes == 2:
+        if n_classes <= 2:
             log_or_print(f"{phase} Loss: {epoch_loss:.4f}, Accuracy: {accuracy:.2f}%, AUC={roc_auc:.4f}", logger)
-
         else:
-            for i in range(n_classes):
-                log_or_print(f"{phase} Loss: {epoch_loss:.4f}, AUC for class {i} = {roc_auc[i]:.4f}, Accuracy: {accuracy:.2f}%",
-                             logger)
+            # for i in roc_auc.keys():
+            #     log_or_print(f"{phase} Loss: {epoch_loss:.4f}, AUC for class {i} = {roc_auc[i]:.4f}, Accuracy: {accuracy:.2f}%",
+            #                  logger)
+            roc_auc = np.mean(list(roc_auc.values()))
+            log_or_print(f"{phase} Loss: {epoch_loss:.4f}, Accuracy: {accuracy:.2f}%, AUC={roc_auc:.4f}", logger)
 
 
 def evaluate_mat(predicted, target, method):
@@ -254,150 +285,3 @@ class EarlyStopping():
         else:
             self.counter = 0
 
-
-def get_bucket(value, buckets):
-    """Return the bucket/range for a given value."""
-    for start, end in buckets:
-        if start <= value < end:
-            return f"{start}-{end}"
-    return "Other"
-
-
-def safe_float_conversion(value):
-    try:
-        return float(value)
-    except ValueError:
-        return value
-
-
-def group_by_attributes(data, buckets_dict, attributes_to_group):
-    """
-    Group subjects based on specified buckets and attributes.
-
-    Parameters:
-    - data (dict): Dictionary containing subject IDs as keys and another dictionary of attributes as values.
-    - buckets_dict (dict): Dictionary specifying buckets for each attribute.
-    - attributes_to_group (list): List of attributes to group by.
-
-    Returns:
-    - dict: A dictionary where keys are attribute values or combinations, and values are lists of subject IDs.
-    """
-
-    def safe_float_conversion(value):
-        try:
-            return float(value)
-        except ValueError:
-            return value
-
-    grouped = {}
-
-    for subject, attributes in data.items():
-        keys = []
-        skip_subject = False
-        for attr in sorted(attributes_to_group):  # sort the attributes_to_group for consistent order
-            # Skip this subject if it's missing one of the attributes_to_group
-            if attr not in attributes or attributes[attr] is None:
-                skip_subject = True
-                break
-
-            value = safe_float_conversion(attributes[attr])
-
-            if attr in buckets_dict:
-                keys.append(get_bucket(value, sorted(buckets_dict[attr])))  # ensure the buckets are sorted
-            else:
-                keys.append(value)
-
-        if skip_subject:
-            continue
-
-        key = tuple(keys) if len(keys) > 1 else keys[0]
-
-        if key not in grouped:
-            grouped[key] = []
-        grouped[key].append(subject)
-
-    return grouped
-
-
-def get_labels_for_subjects_and_attributes(grouped_data, buckets_dict):
-    labels_for_subjects = []
-    attribute_for_labels = {}
-    current_label = 0
-
-    # Go over each attribute in buckets_dict in the defined order
-    for attribute, bucket_ranges in buckets_dict.items():
-        for bucket_range in bucket_ranges:
-            group = f"{bucket_range[0]}-{bucket_range[1]}"
-            if group in grouped_data:
-                attribute_for_labels[current_label] = group
-                subjects = grouped_data[group]
-                for subject in subjects:
-                    labels_for_subjects.append((subject, current_label))
-                current_label += 1
-
-    # Now handle any additional groups in grouped_data that aren't in buckets_dict
-    for group, subjects in grouped_data.items():
-        if group not in attribute_for_labels.values():  # To avoid re-processing
-            attribute_for_labels[current_label] = group
-            for subject in subjects:
-                labels_for_subjects.append((subject, current_label))
-            current_label += 1
-
-    return labels_for_subjects, attribute_for_labels
-
-
-def get_connection(x, k=None, threshold=None, binarize=False, is_symmetric=True):
-    """
-    Process the matrix x to get an adjacency matrix.
-    """
-
-    def keep_k_largest_for_rows(mat, k):
-        # We sort values in ascending order and then keep only the largest k for each row.
-        # The rest are set to 0.
-        sorted_indices = np.argsort(mat, axis=1)
-        row_indices = np.arange(mat.shape[0])[:, None]
-        mat[row_indices, sorted_indices[:, :-k]] = 0
-        return mat
-
-    is_tensor = isinstance(x, torch.Tensor)
-    if is_tensor:
-        x = x.cpu().numpy()
-
-    def process_matrix(matrix):
-        if k:
-            matrix = keep_k_largest_for_rows(matrix, k)
-
-        if threshold:
-            matrix[matrix < threshold] = 0
-
-        if binarize:
-            matrix = np.where(matrix > 0, 1, 0)
-
-        if is_symmetric:
-            matrix = np.maximum(matrix, matrix.T)
-
-        return matrix
-
-    if len(x.shape) == 3:
-        for idx in range(x.shape[0]):
-            x[idx] = process_matrix(x[idx])
-    else:
-        x = process_matrix(x)
-
-    if is_tensor:
-        x = torch.from_numpy(x)
-
-    return x
-
-
-def collate_dgl(samples):
-    # The input `samples` is a list of pairs
-    #  [(subid, graph, label), (subid, graph, label), ...].
-    subs, graphs, labels = map(list, zip(*samples))
-    batched_graph = dgl.batch(graphs)
-    try:
-        labels_tensor = torch.stack(labels, dim=0)
-    except RuntimeError as e:
-        print(f"Error with labels: {labels}")
-        raise e
-    return subs, batched_graph, labels_tensor

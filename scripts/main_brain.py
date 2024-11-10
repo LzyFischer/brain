@@ -90,15 +90,16 @@ def main(args):
     dataset = Brain(
         task=args.task,
         x_attributes=args.x_attributes,
+        args=args,
     )
     """modify"""
-    non_zero_indices = torch.where(dataset.y == 1)[0]
-    zero_indices = torch.where(dataset.y == 0)[0][: len(non_zero_indices)]
-    non_zero_indices = torch.cat((non_zero_indices, zero_indices), dim=0)
-    dataset = dataset[non_zero_indices]
-    # pdb.set_trace()
+    # non_zero_indices = torch.where(dataset.y.sum(1) != 0)[0]
+    # zero_indices = torch.where(dataset.y.sum(1) == 0)[0][: len(non_zero_indices)]
+    # non_zero_indices = torch.cat((non_zero_indices, zero_indices), dim=0)
+    # dataset = dataset[non_zero_indices]
     """modify end"""
     print("Dataset length: ", len(dataset))
+
 
     model_save_dir = pj(abspath("scripts/results"), save_name + ".pth")
     # split the dataset and define the dataloader
@@ -109,6 +110,7 @@ def main(args):
     train_set, val_set, test_set = torch.utils.data.random_split(
         dataset, [train_size, val_size, test_size]
     )
+    pdb.set_trace()
     """modify end"""
 
     # Prepare the dataloaders
@@ -206,7 +208,7 @@ if __name__ == "__main__":
     torch.cuda.empty_cache()
     parser = argparse.ArgumentParser(description="HCDP Classification")
     parser.add_argument("--lr", default=1e-2, type=float, help="learning rate")
-    parser.add_argument("--batch_size", default=32, type=int, help="batch size")
+    parser.add_argument("--batch_size", default=64, type=int, help="batch size")
     parser.add_argument(
         "--max_epochs", default=100, type=int, help="max number of epochs"
     )
@@ -240,6 +242,7 @@ if __name__ == "__main__":
     parser.add_argument("--weight_score", default=[0.5, 0.5], help="weight score")
     parser.add_argument("--if_pos_weight", default="False", help="if pos weight", type=str)
     parser.add_argument("--modality", default="FC", help="modality", type=str, choices=["FC", "SC", "Both"])
+    parser.add_argument("--task_idx", default=0, help="pretrain", type=int)
 
     args = parser.parse_args()
 

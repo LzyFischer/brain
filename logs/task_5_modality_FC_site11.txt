@@ -1,0 +1,828 @@
+wandb: Currently logged in as: vjd5zr. Use `wandb login --relogin` to force relogin
+wandb: wandb version 0.18.5 is available!  To upgrade, please run:
+wandb:  $ pip install wandb --upgrade
+wandb: Tracking run with wandb version 0.16.6
+wandb: Run data is saved locally in /home/zhenyu/program/Brain/wandb/run-20241019_000904-ueihtfaa
+wandb: Run `wandb offline` to turn off syncing.
+wandb: Syncing run poswFalse_modFC_lr0.01
+wandb: ⭐️ View project at https://wandb.ai/vjd5zr/brain
+wandb: 🚀 View run at https://wandb.ai/vjd5zr/brain/runs/ueihtfaa
+2024-10-19 00:09:05 [logger2] INFO Namespace(lr=0.01, batch_size=32, max_epochs=100, L2=0.0001, dropout=0.1, seed=100, config='GIN_classification', task='classification', x_attributes=['FC', 'SC'], y_attribute=['nih_crycogcomp_ageadjusted', 'nih_fluidcogcomp_ageadjusted'], attributes_group=['Age in year'], train_val_test=[0.7, 0.1, 0.2], dataset='dglHCP', sparse=30, gl=False, weight_score=[0.5, 0.5], if_pos_weight=False, modality='FC', task_idx=5)
+2024-10-19 00:09:05 [logger2] INFO {'model': 'GIN_pyg', 'model_save_suffix': 'GIN_pyg', 'pretrain': False, 'pretrain_model_name': 'hcdp/pretrained/2023_10_30_19_10dglHCP_GIN_GIN_regression_30.pth', 'net_params': {'num_layers': 3, 'in_channels': 379, 'hidden_channels': 64, 'out_channels': 128, 'dropout': 0.1, 'n_vars': 1, 'activation': 'relu', 'readout': 'mean', 'additional_feature': 0}, 'dataset': 'dglHCP'}
+/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/torch_geometric/data/in_memory_dataset.py:300: UserWarning: It is not recommended to directly access the internal storage format `data` of an 'InMemoryDataset'. If you are absolutely certain what you are doing, access the internal storage via `InMemoryDataset._data` instead to suppress this warning. Alternatively, you can access stacked individual attributes of every graph via `dataset.{attr_name}`.
+  warnings.warn(msg)
+2024-10-19 00:09:05 [logger2] INFO ############################################################
+2024-10-19 00:09:07 [logger2] INFO GIN_pyg(
+  (layers): ModuleList(
+    (0): GCNConv(379, 64)
+    (1-3): 3 x GCNConv(64, 64)
+  )
+  (x_linear): Linear(in_features=379, out_features=64, bias=True)
+  (dropout): Dropout(p=0.1, inplace=False)
+  (predict): Linear(in_features=64, out_features=1, bias=True)
+)
+2024-10-19 00:09:07 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:07 [logger2] INFO EPOCH:0 (lr=0.01)
+Dataset length:  64
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!:  50%|█████     | 1/2 [00:02<00:02,  2.02s/it]Training iterations!: 100%|██████████| 2/2 [00:02<00:00,  1.03s/it]
+2024-10-19 00:09:09 [logger2] INFO Train Loss: 6.4482, Accuracy: 43.18%, AUC=0.3799
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 32.73it/s]
+2024-10-19 00:09:09 [logger2] INFO Val Loss: 5.2538, Accuracy: 33.33%, AUC=0.1250
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 30.45it/s]
+2024-10-19 00:09:09 [logger2] INFO Test Loss: 3.5846, Accuracy: 50.00%, AUC=0.5510
+2024-10-19 00:09:09 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:09 [logger2] INFO EPOCH:1 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 27.05it/s]
+2024-10-19 00:09:10 [logger2] INFO Train Loss: 1.9961, Accuracy: 59.09%, AUC=0.6832
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 30.17it/s]
+2024-10-19 00:09:10 [logger2] INFO Val Loss: 1.2100, Accuracy: 66.67%, AUC=0.3750
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.09it/s]
+2024-10-19 00:09:10 [logger2] INFO Test Loss: 1.5746, Accuracy: 50.00%, AUC=0.4490
+2024-10-19 00:09:10 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:10 [logger2] INFO EPOCH:2 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.68it/s]
+2024-10-19 00:09:10 [logger2] INFO Train Loss: 1.3461, Accuracy: 47.73%, AUC=0.5010
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 32.72it/s]
+2024-10-19 00:09:10 [logger2] INFO Val Loss: 1.3725, Accuracy: 33.33%, AUC=0.6250
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.04it/s]
+2024-10-19 00:09:10 [logger2] INFO Test Loss: 1.0802, Accuracy: 50.00%, AUC=0.5102
+2024-10-19 00:09:10 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:10 [logger2] INFO EPOCH:3 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.66it/s]
+2024-10-19 00:09:10 [logger2] INFO Train Loss: 0.9141, Accuracy: 52.27%, AUC=0.5114
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 32.06it/s]
+2024-10-19 00:09:10 [logger2] INFO Val Loss: 0.7689, Accuracy: 50.00%, AUC=0.2500
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 36.78it/s]
+2024-10-19 00:09:10 [logger2] INFO Test Loss: 0.7063, Accuracy: 50.00%, AUC=0.5510
+2024-10-19 00:09:10 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:10 [logger2] INFO EPOCH:4 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 27.81it/s]
+2024-10-19 00:09:10 [logger2] INFO Train Loss: 0.6521, Accuracy: 56.82%, AUC=0.7019
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.33it/s]
+2024-10-19 00:09:10 [logger2] INFO Val Loss: 0.7193, Accuracy: 66.67%, AUC=0.2500
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.26it/s]
+2024-10-19 00:09:10 [logger2] INFO Test Loss: 0.8139, Accuracy: 50.00%, AUC=0.4490
+2024-10-19 00:09:10 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:10 [logger2] INFO EPOCH:5 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.44it/s]
+2024-10-19 00:09:10 [logger2] INFO Train Loss: 0.7527, Accuracy: 50.00%, AUC=0.6791
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.71it/s]
+2024-10-19 00:09:10 [logger2] INFO Val Loss: 0.8579, Accuracy: 33.33%, AUC=0.3750
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.34it/s]
+2024-10-19 00:09:10 [logger2] INFO Test Loss: 0.7467, Accuracy: 50.00%, AUC=0.4898
+2024-10-19 00:09:10 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:10 [logger2] INFO EPOCH:6 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.49it/s]
+2024-10-19 00:09:10 [logger2] INFO Train Loss: 0.7742, Accuracy: 54.55%, AUC=0.6832
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.01it/s]
+2024-10-19 00:09:10 [logger2] INFO Val Loss: 0.9490, Accuracy: 33.33%, AUC=0.3750
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 23.57it/s]
+2024-10-19 00:09:10 [logger2] INFO Test Loss: 0.7988, Accuracy: 50.00%, AUC=0.4286
+2024-10-19 00:09:10 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:10 [logger2] INFO EPOCH:7 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.12it/s]
+2024-10-19 00:09:10 [logger2] INFO Train Loss: 0.6693, Accuracy: 50.00%, AUC=0.6418
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 32.02it/s]
+2024-10-19 00:09:10 [logger2] INFO Val Loss: 0.7350, Accuracy: 66.67%, AUC=0.0000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.09it/s]
+2024-10-19 00:09:11 [logger2] INFO Test Loss: 0.7433, Accuracy: 50.00%, AUC=0.4694
+2024-10-19 00:09:11 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:11 [logger2] INFO EPOCH:8 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.66it/s]
+2024-10-19 00:09:11 [logger2] INFO Train Loss: 0.6224, Accuracy: 61.36%, AUC=0.8509
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.53it/s]
+2024-10-19 00:09:11 [logger2] INFO Val Loss: 0.7255, Accuracy: 50.00%, AUC=0.2500
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 25.42it/s]
+2024-10-19 00:09:11 [logger2] INFO Test Loss: 0.7151, Accuracy: 57.14%, AUC=0.4694
+2024-10-19 00:09:11 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:11 [logger2] INFO EPOCH:9 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.60it/s]
+2024-10-19 00:09:11 [logger2] INFO Train Loss: 0.5620, Accuracy: 81.82%, AUC=0.9172
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 25.95it/s]
+2024-10-19 00:09:11 [logger2] INFO Val Loss: 0.8386, Accuracy: 50.00%, AUC=0.3750
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 30.97it/s]
+2024-10-19 00:09:11 [logger2] INFO Test Loss: 0.7593, Accuracy: 42.86%, AUC=0.4694
+2024-10-19 00:09:11 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:11 [logger2] INFO EPOCH:10 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 20.66it/s]
+2024-10-19 00:09:11 [logger2] INFO Train Loss: 0.5249, Accuracy: 72.73%, AUC=0.9648
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.14it/s]
+2024-10-19 00:09:11 [logger2] INFO Val Loss: 0.7922, Accuracy: 50.00%, AUC=0.3750
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.10it/s]
+2024-10-19 00:09:11 [logger2] INFO Test Loss: 0.7389, Accuracy: 42.86%, AUC=0.5102
+2024-10-19 00:09:11 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:11 [logger2] INFO EPOCH:11 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.85it/s]
+2024-10-19 00:09:11 [logger2] INFO Train Loss: 0.4690, Accuracy: 84.09%, AUC=0.9793
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.60it/s]
+2024-10-19 00:09:11 [logger2] INFO Val Loss: 0.7424, Accuracy: 50.00%, AUC=0.3750
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.20it/s]
+2024-10-19 00:09:11 [logger2] INFO Test Loss: 0.7255, Accuracy: 50.00%, AUC=0.4694
+2024-10-19 00:09:11 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:11 [logger2] INFO EPOCH:12 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 22.15it/s]
+2024-10-19 00:09:11 [logger2] INFO Train Loss: 0.4267, Accuracy: 93.18%, AUC=0.9896
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.93it/s]
+2024-10-19 00:09:11 [logger2] INFO Val Loss: 0.8078, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.34it/s]
+2024-10-19 00:09:11 [logger2] INFO Test Loss: 0.7482, Accuracy: 50.00%, AUC=0.4694
+2024-10-19 00:09:11 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:11 [logger2] INFO EPOCH:13 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 22.29it/s]
+2024-10-19 00:09:11 [logger2] INFO Train Loss: 0.3843, Accuracy: 88.64%, AUC=0.9772
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.34it/s]
+2024-10-19 00:09:12 [logger2] INFO Val Loss: 0.7481, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 21.40it/s]
+2024-10-19 00:09:12 [logger2] INFO Test Loss: 0.7495, Accuracy: 42.86%, AUC=0.4490
+2024-10-19 00:09:12 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:12 [logger2] INFO EPOCH:14 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.98it/s]
+2024-10-19 00:09:12 [logger2] INFO Train Loss: 0.3610, Accuracy: 90.91%, AUC=0.9772
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.12it/s]
+2024-10-19 00:09:12 [logger2] INFO Val Loss: 0.8501, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 21.39it/s]
+2024-10-19 00:09:12 [logger2] INFO Test Loss: 0.8018, Accuracy: 50.00%, AUC=0.4694
+2024-10-19 00:09:12 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:12 [logger2] INFO EPOCH:15 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.22it/s]
+2024-10-19 00:09:12 [logger2] INFO Train Loss: 0.3468, Accuracy: 88.64%, AUC=0.9772
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.28it/s]
+2024-10-19 00:09:12 [logger2] INFO Val Loss: 0.7774, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 35.78it/s]
+2024-10-19 00:09:12 [logger2] INFO Test Loss: 0.8192, Accuracy: 35.71%, AUC=0.5102
+2024-10-19 00:09:12 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:12 [logger2] INFO EPOCH:16 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.53it/s]
+2024-10-19 00:09:12 [logger2] INFO Train Loss: 0.2567, Accuracy: 95.45%, AUC=0.9979
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.89it/s]
+2024-10-19 00:09:12 [logger2] INFO Val Loss: 0.7040, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.98it/s]
+2024-10-19 00:09:12 [logger2] INFO Test Loss: 0.8637, Accuracy: 50.00%, AUC=0.5102
+2024-10-19 00:09:12 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:12 [logger2] INFO EPOCH:17 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.07it/s]
+2024-10-19 00:09:12 [logger2] INFO Train Loss: 0.2426, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.35it/s]
+2024-10-19 00:09:12 [logger2] INFO Val Loss: 0.8486, Accuracy: 50.00%, AUC=0.6250
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 21.42it/s]
+2024-10-19 00:09:12 [logger2] INFO Test Loss: 0.9185, Accuracy: 28.57%, AUC=0.4082
+2024-10-19 00:09:12 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:12 [logger2] INFO EPOCH:18 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 19.53it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 19.44it/s]
+2024-10-19 00:09:12 [logger2] INFO Train Loss: 0.1549, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.06it/s]
+2024-10-19 00:09:12 [logger2] INFO Val Loss: 0.6611, Accuracy: 66.67%, AUC=0.6250
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 23.39it/s]
+2024-10-19 00:09:12 [logger2] INFO Test Loss: 0.9746, Accuracy: 50.00%, AUC=0.4694
+2024-10-19 00:09:12 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:12 [logger2] INFO EPOCH:19 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.91it/s]
+2024-10-19 00:09:12 [logger2] INFO Train Loss: 0.1207, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.18it/s]
+2024-10-19 00:09:13 [logger2] INFO Val Loss: 0.9104, Accuracy: 50.00%, AUC=0.7500
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 22.93it/s]
+2024-10-19 00:09:13 [logger2] INFO Test Loss: 1.0096, Accuracy: 57.14%, AUC=0.4898
+2024-10-19 00:09:13 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:13 [logger2] INFO EPOCH:20 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.88it/s]
+2024-10-19 00:09:13 [logger2] INFO Train Loss: 0.0686, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 30.70it/s]
+2024-10-19 00:09:13 [logger2] INFO Val Loss: 0.9285, Accuracy: 50.00%, AUC=0.7500
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.95it/s]
+2024-10-19 00:09:13 [logger2] INFO Test Loss: 1.0691, Accuracy: 64.29%, AUC=0.5306
+2024-10-19 00:09:13 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:13 [logger2] INFO EPOCH:21 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 28.27it/s]
+2024-10-19 00:09:13 [logger2] INFO Train Loss: 0.0504, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.15it/s]
+2024-10-19 00:09:13 [logger2] INFO Val Loss: 1.0349, Accuracy: 50.00%, AUC=0.7500
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.15it/s]
+2024-10-19 00:09:13 [logger2] INFO Test Loss: 1.1795, Accuracy: 64.29%, AUC=0.5306
+2024-10-19 00:09:13 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:13 [logger2] INFO EPOCH:22 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.92it/s]
+2024-10-19 00:09:13 [logger2] INFO Train Loss: 0.0334, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.84it/s]
+2024-10-19 00:09:13 [logger2] INFO Val Loss: 1.2743, Accuracy: 50.00%, AUC=0.7500
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.00it/s]
+2024-10-19 00:09:13 [logger2] INFO Test Loss: 1.3690, Accuracy: 57.14%, AUC=0.5102
+2024-10-19 00:09:13 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:13 [logger2] INFO EPOCH:23 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!:  50%|█████     | 1/2 [00:00<00:00,  8.79it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 12.58it/s]
+2024-10-19 00:09:13 [logger2] INFO Train Loss: 0.0197, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 24.88it/s]
+2024-10-19 00:09:13 [logger2] INFO Val Loss: 1.2064, Accuracy: 50.00%, AUC=0.7500
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00,  8.79it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00,  8.76it/s]
+2024-10-19 00:09:13 [logger2] INFO Test Loss: 1.4122, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:13 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:13 [logger2] INFO EPOCH:24 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!:  50%|█████     | 1/2 [00:00<00:00,  3.88it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00,  5.94it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00,  5.49it/s]
+2024-10-19 00:09:14 [logger2] INFO Train Loss: 0.0151, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 10.86it/s]
+2024-10-19 00:09:14 [logger2] INFO Val Loss: 1.4310, Accuracy: 50.00%, AUC=0.6250
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.24it/s]
+2024-10-19 00:09:14 [logger2] INFO Test Loss: 1.5979, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:14 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:14 [logger2] INFO EPOCH:25 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!:  50%|█████     | 1/2 [00:00<00:00,  5.27it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00,  7.82it/s]
+2024-10-19 00:09:14 [logger2] INFO Train Loss: 0.0072, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 17.85it/s]
+2024-10-19 00:09:14 [logger2] INFO Val Loss: 1.9428, Accuracy: 50.00%, AUC=0.6250
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00,  9.59it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00,  9.55it/s]
+2024-10-19 00:09:14 [logger2] INFO Test Loss: 1.9242, Accuracy: 57.14%, AUC=0.4898
+2024-10-19 00:09:14 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:14 [logger2] INFO EPOCH:26 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.17it/s]
+2024-10-19 00:09:14 [logger2] INFO Train Loss: 0.0051, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 33.86it/s]
+2024-10-19 00:09:14 [logger2] INFO Val Loss: 1.9547, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.10it/s]
+2024-10-19 00:09:14 [logger2] INFO Test Loss: 1.9928, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:14 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:14 [logger2] INFO EPOCH:27 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.10it/s]
+2024-10-19 00:09:15 [logger2] INFO Train Loss: 0.0032, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 30.32it/s]
+2024-10-19 00:09:15 [logger2] INFO Val Loss: 1.6819, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 35.94it/s]
+2024-10-19 00:09:15 [logger2] INFO Test Loss: 1.9388, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:15 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:15 [logger2] INFO EPOCH:28 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.47it/s]
+2024-10-19 00:09:15 [logger2] INFO Train Loss: 0.0025, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.64it/s]
+2024-10-19 00:09:15 [logger2] INFO Val Loss: 1.4935, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 30.14it/s]
+2024-10-19 00:09:15 [logger2] INFO Test Loss: 1.9308, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:15 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:15 [logger2] INFO EPOCH:29 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.87it/s]
+2024-10-19 00:09:15 [logger2] INFO Train Loss: 0.0018, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.21it/s]
+2024-10-19 00:09:15 [logger2] INFO Val Loss: 1.5790, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 25.14it/s]
+2024-10-19 00:09:15 [logger2] INFO Test Loss: 2.0223, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:15 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:15 [logger2] INFO EPOCH:30 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.83it/s]
+2024-10-19 00:09:15 [logger2] INFO Train Loss: 0.0011, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 32.16it/s]
+2024-10-19 00:09:15 [logger2] INFO Val Loss: 1.7449, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.35it/s]
+2024-10-19 00:09:15 [logger2] INFO Test Loss: 2.1329, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:15 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:15 [logger2] INFO EPOCH:31 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.37it/s]
+2024-10-19 00:09:15 [logger2] INFO Train Loss: 0.0010, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 22.70it/s]
+2024-10-19 00:09:15 [logger2] INFO Val Loss: 2.0325, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.64it/s]
+2024-10-19 00:09:15 [logger2] INFO Test Loss: 2.2793, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:15 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:15 [logger2] INFO EPOCH:32 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.41it/s]
+2024-10-19 00:09:15 [logger2] INFO Train Loss: 0.0006, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.89it/s]
+2024-10-19 00:09:15 [logger2] INFO Val Loss: 2.3117, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.02it/s]
+2024-10-19 00:09:15 [logger2] INFO Test Loss: 2.4167, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:15 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:15 [logger2] INFO EPOCH:33 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.91it/s]
+2024-10-19 00:09:15 [logger2] INFO Train Loss: 0.0005, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.79it/s]
+2024-10-19 00:09:16 [logger2] INFO Val Loss: 2.5381, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.86it/s]
+2024-10-19 00:09:16 [logger2] INFO Test Loss: 2.5282, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:16 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:16 [logger2] INFO EPOCH:34 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.05it/s]
+2024-10-19 00:09:16 [logger2] INFO Train Loss: 0.0007, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.15it/s]
+2024-10-19 00:09:16 [logger2] INFO Val Loss: 2.6146, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.35it/s]
+2024-10-19 00:09:16 [logger2] INFO Test Loss: 2.5764, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:16 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:16 [logger2] INFO EPOCH:35 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.28it/s]
+2024-10-19 00:09:16 [logger2] INFO Train Loss: 0.0004, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 32.28it/s]
+2024-10-19 00:09:16 [logger2] INFO Val Loss: 2.5878, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.12it/s]
+2024-10-19 00:09:16 [logger2] INFO Test Loss: 2.5804, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:16 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:16 [logger2] INFO EPOCH:36 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.96it/s]
+2024-10-19 00:09:16 [logger2] INFO Train Loss: 0.0005, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.85it/s]
+2024-10-19 00:09:16 [logger2] INFO Val Loss: 2.4990, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 24.85it/s]
+2024-10-19 00:09:16 [logger2] INFO Test Loss: 2.5593, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:16 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:16 [logger2] INFO EPOCH:37 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.14it/s]
+2024-10-19 00:09:16 [logger2] INFO Train Loss: 0.0004, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.24it/s]
+2024-10-19 00:09:16 [logger2] INFO Val Loss: 2.3563, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.47it/s]
+2024-10-19 00:09:16 [logger2] INFO Test Loss: 2.5183, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:16 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:16 [logger2] INFO EPOCH:38 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.99it/s]
+2024-10-19 00:09:16 [logger2] INFO Train Loss: 0.0005, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.69it/s]
+2024-10-19 00:09:16 [logger2] INFO Val Loss: 2.2733, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.72it/s]
+2024-10-19 00:09:16 [logger2] INFO Test Loss: 2.4978, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:16 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:16 [logger2] INFO EPOCH:39 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 27.08it/s]
+2024-10-19 00:09:16 [logger2] INFO Train Loss: 0.0004, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.28it/s]
+2024-10-19 00:09:16 [logger2] INFO Val Loss: 2.2838, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.30it/s]
+2024-10-19 00:09:17 [logger2] INFO Test Loss: 2.5078, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:17 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:17 [logger2] INFO EPOCH:40 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.59it/s]
+2024-10-19 00:09:17 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.43it/s]
+2024-10-19 00:09:17 [logger2] INFO Val Loss: 2.3467, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.18it/s]
+2024-10-19 00:09:17 [logger2] INFO Test Loss: 2.5339, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:17 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:17 [logger2] INFO EPOCH:41 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.42it/s]
+2024-10-19 00:09:17 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.74it/s]
+2024-10-19 00:09:17 [logger2] INFO Val Loss: 2.4072, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.15it/s]
+2024-10-19 00:09:17 [logger2] INFO Test Loss: 2.5579, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:17 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:17 [logger2] INFO EPOCH:42 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 21.44it/s]
+2024-10-19 00:09:17 [logger2] INFO Train Loss: 0.0003, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.53it/s]
+2024-10-19 00:09:17 [logger2] INFO Val Loss: 2.4800, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.69it/s]
+2024-10-19 00:09:17 [logger2] INFO Test Loss: 2.5850, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:17 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:17 [logger2] INFO EPOCH:43 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.69it/s]
+2024-10-19 00:09:17 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.44it/s]
+2024-10-19 00:09:17 [logger2] INFO Val Loss: 2.5453, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 23.45it/s]
+2024-10-19 00:09:17 [logger2] INFO Test Loss: 2.6089, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:17 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:17 [logger2] INFO EPOCH:44 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.41it/s]
+2024-10-19 00:09:17 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.69it/s]
+2024-10-19 00:09:17 [logger2] INFO Val Loss: 2.5757, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.71it/s]
+2024-10-19 00:09:17 [logger2] INFO Test Loss: 2.6201, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:17 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:17 [logger2] INFO EPOCH:45 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 27.16it/s]
+2024-10-19 00:09:17 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.37it/s]
+2024-10-19 00:09:17 [logger2] INFO Val Loss: 2.5848, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.08it/s]
+2024-10-19 00:09:17 [logger2] INFO Test Loss: 2.6233, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:17 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:17 [logger2] INFO EPOCH:46 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.59it/s]
+2024-10-19 00:09:18 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 33.79it/s]
+2024-10-19 00:09:18 [logger2] INFO Val Loss: 2.5776, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 30.98it/s]
+2024-10-19 00:09:18 [logger2] INFO Test Loss: 2.6205, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:18 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:18 [logger2] INFO EPOCH:47 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.07it/s]
+2024-10-19 00:09:18 [logger2] INFO Train Loss: 0.0003, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 32.24it/s]
+2024-10-19 00:09:18 [logger2] INFO Val Loss: 2.6189, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.86it/s]
+2024-10-19 00:09:18 [logger2] INFO Test Loss: 2.6338, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:18 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:18 [logger2] INFO EPOCH:48 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 28.19it/s]
+2024-10-19 00:09:18 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.55it/s]
+2024-10-19 00:09:18 [logger2] INFO Val Loss: 2.6640, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.87it/s]
+2024-10-19 00:09:18 [logger2] INFO Test Loss: 2.6481, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:18 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:18 [logger2] INFO EPOCH:49 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 27.83it/s]
+2024-10-19 00:09:18 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.48it/s]
+2024-10-19 00:09:18 [logger2] INFO Val Loss: 2.6918, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.40it/s]
+2024-10-19 00:09:18 [logger2] INFO Test Loss: 2.6565, Accuracy: 64.29%, AUC=0.4898
+2024-10-19 00:09:18 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:18 [logger2] INFO EPOCH:50 (lr=0.01)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.41it/s]
+2024-10-19 00:09:18 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.73it/s]
+2024-10-19 00:09:18 [logger2] INFO Val Loss: 2.6688, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.08it/s]
+2024-10-19 00:09:18 [logger2] INFO Test Loss: 2.6472, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:18 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:18 [logger2] INFO EPOCH:51 (lr=0.001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.13it/s]
+2024-10-19 00:09:18 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.61it/s]
+2024-10-19 00:09:18 [logger2] INFO Val Loss: 2.6641, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.29it/s]
+2024-10-19 00:09:18 [logger2] INFO Test Loss: 2.6454, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:18 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:18 [logger2] INFO EPOCH:52 (lr=0.001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.37it/s]
+2024-10-19 00:09:18 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 22.97it/s]
+2024-10-19 00:09:19 [logger2] INFO Val Loss: 2.6586, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 23.47it/s]
+2024-10-19 00:09:19 [logger2] INFO Test Loss: 2.6434, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:19 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:19 [logger2] INFO EPOCH:53 (lr=0.001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.89it/s]
+2024-10-19 00:09:19 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 32.90it/s]
+2024-10-19 00:09:19 [logger2] INFO Val Loss: 2.6533, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.71it/s]
+2024-10-19 00:09:19 [logger2] INFO Test Loss: 2.6414, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:19 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:19 [logger2] INFO EPOCH:54 (lr=0.001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.60it/s]
+2024-10-19 00:09:19 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.95it/s]
+2024-10-19 00:09:19 [logger2] INFO Val Loss: 2.6476, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.61it/s]
+2024-10-19 00:09:19 [logger2] INFO Test Loss: 2.6393, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:19 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:19 [logger2] INFO EPOCH:55 (lr=0.001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.43it/s]
+2024-10-19 00:09:19 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.46it/s]
+2024-10-19 00:09:19 [logger2] INFO Val Loss: 2.6380, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.91it/s]
+2024-10-19 00:09:19 [logger2] INFO Test Loss: 2.6358, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:19 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:19 [logger2] INFO EPOCH:56 (lr=0.001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 27.11it/s]
+2024-10-19 00:09:19 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 23.96it/s]
+2024-10-19 00:09:19 [logger2] INFO Val Loss: 2.6279, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 24.72it/s]
+2024-10-19 00:09:19 [logger2] INFO Test Loss: 2.6322, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:19 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:19 [logger2] INFO EPOCH:57 (lr=0.001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.33it/s]
+2024-10-19 00:09:19 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.71it/s]
+2024-10-19 00:09:19 [logger2] INFO Val Loss: 2.6180, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.80it/s]
+2024-10-19 00:09:19 [logger2] INFO Test Loss: 2.6287, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:19 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:19 [logger2] INFO EPOCH:58 (lr=0.0001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.68it/s]
+2024-10-19 00:09:19 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.02it/s]
+2024-10-19 00:09:19 [logger2] INFO Val Loss: 2.6171, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.02it/s]
+2024-10-19 00:09:20 [logger2] INFO Test Loss: 2.6284, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:20 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:20 [logger2] INFO EPOCH:59 (lr=0.0001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.40it/s]
+2024-10-19 00:09:20 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 32.24it/s]
+2024-10-19 00:09:20 [logger2] INFO Val Loss: 2.6166, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.28it/s]
+2024-10-19 00:09:20 [logger2] INFO Test Loss: 2.6282, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:20 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:20 [logger2] INFO EPOCH:60 (lr=0.0001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.96it/s]
+2024-10-19 00:09:20 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.81it/s]
+2024-10-19 00:09:20 [logger2] INFO Val Loss: 2.6160, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 25.22it/s]
+2024-10-19 00:09:20 [logger2] INFO Test Loss: 2.6280, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:20 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:20 [logger2] INFO EPOCH:61 (lr=0.0001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.47it/s]
+2024-10-19 00:09:20 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.69it/s]
+2024-10-19 00:09:20 [logger2] INFO Val Loss: 2.6158, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 24.59it/s]
+2024-10-19 00:09:20 [logger2] INFO Test Loss: 2.6279, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:20 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:20 [logger2] INFO EPOCH:62 (lr=0.0001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.90it/s]
+2024-10-19 00:09:20 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.37it/s]
+2024-10-19 00:09:20 [logger2] INFO Val Loss: 2.6156, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 25.69it/s]
+2024-10-19 00:09:20 [logger2] INFO Test Loss: 2.6278, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:20 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:20 [logger2] INFO EPOCH:63 (lr=0.0001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 29.21it/s]
+2024-10-19 00:09:20 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.72it/s]
+2024-10-19 00:09:20 [logger2] INFO Val Loss: 2.6153, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.48it/s]
+2024-10-19 00:09:20 [logger2] INFO Test Loss: 2.6277, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:20 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:20 [logger2] INFO EPOCH:64 (lr=0.0001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 28.82it/s]
+2024-10-19 00:09:20 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.56it/s]
+2024-10-19 00:09:20 [logger2] INFO Val Loss: 2.6149, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.41it/s]
+2024-10-19 00:09:20 [logger2] INFO Test Loss: 2.6276, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:20 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:20 [logger2] INFO EPOCH:65 (lr=0.0001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.94it/s]
+2024-10-19 00:09:21 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.98it/s]
+2024-10-19 00:09:21 [logger2] INFO Val Loss: 2.6144, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.15it/s]
+2024-10-19 00:09:21 [logger2] INFO Test Loss: 2.6274, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:21 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:21 [logger2] INFO EPOCH:66 (lr=0.0001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 20.33it/s]
+2024-10-19 00:09:21 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.80it/s]
+2024-10-19 00:09:21 [logger2] INFO Val Loss: 2.6140, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.56it/s]
+2024-10-19 00:09:21 [logger2] INFO Test Loss: 2.6272, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:21 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:21 [logger2] INFO EPOCH:67 (lr=0.0001)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.04it/s]
+2024-10-19 00:09:21 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.53it/s]
+2024-10-19 00:09:21 [logger2] INFO Val Loss: 2.6136, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.04it/s]
+2024-10-19 00:09:21 [logger2] INFO Test Loss: 2.6271, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:21 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:21 [logger2] INFO EPOCH:68 (lr=1e-05)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.52it/s]
+2024-10-19 00:09:21 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 33.41it/s]
+2024-10-19 00:09:21 [logger2] INFO Val Loss: 2.6135, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 25.90it/s]
+2024-10-19 00:09:21 [logger2] INFO Test Loss: 2.6271, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:21 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:21 [logger2] INFO EPOCH:69 (lr=1e-05)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 27.84it/s]
+2024-10-19 00:09:21 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 25.42it/s]
+2024-10-19 00:09:21 [logger2] INFO Val Loss: 2.6135, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 24.71it/s]
+2024-10-19 00:09:21 [logger2] INFO Test Loss: 2.6270, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:21 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:21 [logger2] INFO EPOCH:70 (lr=1e-05)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.23it/s]
+2024-10-19 00:09:21 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 33.91it/s]
+2024-10-19 00:09:21 [logger2] INFO Val Loss: 2.6134, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.37it/s]
+2024-10-19 00:09:21 [logger2] INFO Test Loss: 2.6270, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:21 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:21 [logger2] INFO EPOCH:71 (lr=1e-05)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 27.72it/s]
+2024-10-19 00:09:21 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 25.34it/s]
+2024-10-19 00:09:22 [logger2] INFO Val Loss: 2.6133, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.48it/s]
+2024-10-19 00:09:22 [logger2] INFO Test Loss: 2.6270, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:22 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:22 [logger2] INFO EPOCH:72 (lr=1e-05)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.58it/s]
+2024-10-19 00:09:22 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.13it/s]
+2024-10-19 00:09:22 [logger2] INFO Val Loss: 2.6132, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.20it/s]
+2024-10-19 00:09:22 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:22 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:22 [logger2] INFO EPOCH:73 (lr=1e-05)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 27.03it/s]
+2024-10-19 00:09:22 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 30.99it/s]
+2024-10-19 00:09:22 [logger2] INFO Val Loss: 2.6131, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.02it/s]
+2024-10-19 00:09:22 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:22 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:22 [logger2] INFO EPOCH:74 (lr=1.0000000000000002e-06)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.29it/s]
+2024-10-19 00:09:22 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 30.17it/s]
+2024-10-19 00:09:22 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.76it/s]
+2024-10-19 00:09:22 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:22 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:22 [logger2] INFO EPOCH:75 (lr=1.0000000000000002e-06)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.35it/s]
+2024-10-19 00:09:22 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.14it/s]
+2024-10-19 00:09:22 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.63it/s]
+2024-10-19 00:09:22 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:22 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:22 [logger2] INFO EPOCH:76 (lr=1.0000000000000002e-06)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 28.14it/s]
+2024-10-19 00:09:22 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 25.44it/s]
+2024-10-19 00:09:22 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.04it/s]
+2024-10-19 00:09:22 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:22 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:22 [logger2] INFO EPOCH:77 (lr=1.0000000000000002e-06)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.79it/s]
+2024-10-19 00:09:22 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.57it/s]
+2024-10-19 00:09:22 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.35it/s]
+2024-10-19 00:09:23 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:23 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:23 [logger2] INFO EPOCH:78 (lr=1.0000000000000002e-06)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.43it/s]
+2024-10-19 00:09:23 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 30.30it/s]
+2024-10-19 00:09:23 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 24.89it/s]
+2024-10-19 00:09:23 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:23 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:23 [logger2] INFO EPOCH:79 (lr=1.0000000000000002e-07)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.82it/s]
+2024-10-19 00:09:23 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.83it/s]
+2024-10-19 00:09:23 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 25.90it/s]
+2024-10-19 00:09:23 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:23 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:23 [logger2] INFO EPOCH:80 (lr=1.0000000000000002e-07)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.59it/s]
+2024-10-19 00:09:23 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.97it/s]
+2024-10-19 00:09:23 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.27it/s]
+2024-10-19 00:09:23 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:23 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:23 [logger2] INFO EPOCH:81 (lr=1.0000000000000002e-07)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.02it/s]
+2024-10-19 00:09:23 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.94it/s]
+2024-10-19 00:09:23 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 25.89it/s]
+2024-10-19 00:09:23 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:23 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:23 [logger2] INFO EPOCH:82 (lr=1.0000000000000002e-07)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!:  50%|█████     | 1/2 [00:00<00:00,  7.05it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 11.07it/s]
+2024-10-19 00:09:23 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.65it/s]
+2024-10-19 00:09:23 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.81it/s]
+2024-10-19 00:09:23 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:23 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:23 [logger2] INFO EPOCH:83 (lr=1.0000000000000002e-07)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 21.88it/s]
+2024-10-19 00:09:24 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.06it/s]
+2024-10-19 00:09:24 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 15.66it/s]
+2024-10-19 00:09:24 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:24 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:24 [logger2] INFO EPOCH:84 (lr=1.0000000000000002e-07)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 18.66it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 18.58it/s]
+2024-10-19 00:09:24 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.70it/s]
+2024-10-19 00:09:24 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 23.36it/s]
+2024-10-19 00:09:24 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:24 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:24 [logger2] INFO EPOCH:85 (lr=1.0000000000000002e-07)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.14it/s]
+2024-10-19 00:09:24 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.67it/s]
+2024-10-19 00:09:24 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.18it/s]
+2024-10-19 00:09:24 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:24 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:24 [logger2] INFO EPOCH:86 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 29.45it/s]
+2024-10-19 00:09:24 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.81it/s]
+2024-10-19 00:09:24 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.53it/s]
+2024-10-19 00:09:24 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:24 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:24 [logger2] INFO EPOCH:87 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 27.80it/s]
+2024-10-19 00:09:24 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 35.44it/s]
+2024-10-19 00:09:24 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 32.75it/s]
+2024-10-19 00:09:24 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:24 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:24 [logger2] INFO EPOCH:88 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.97it/s]
+2024-10-19 00:09:24 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 33.39it/s]
+2024-10-19 00:09:24 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.14it/s]
+2024-10-19 00:09:24 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:24 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:24 [logger2] INFO EPOCH:89 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.48it/s]
+2024-10-19 00:09:24 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 33.72it/s]
+2024-10-19 00:09:24 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 22.30it/s]
+2024-10-19 00:09:25 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:25 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:25 [logger2] INFO EPOCH:90 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.54it/s]
+2024-10-19 00:09:25 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.21it/s]
+2024-10-19 00:09:25 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 22.41it/s]
+2024-10-19 00:09:25 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:25 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:25 [logger2] INFO EPOCH:91 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.15it/s]
+2024-10-19 00:09:25 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 31.72it/s]
+2024-10-19 00:09:25 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 22.30it/s]
+2024-10-19 00:09:25 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:25 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:25 [logger2] INFO EPOCH:92 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.99it/s]
+2024-10-19 00:09:25 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.37it/s]
+2024-10-19 00:09:25 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 25.15it/s]
+2024-10-19 00:09:25 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:25 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:25 [logger2] INFO EPOCH:93 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 26.12it/s]
+2024-10-19 00:09:25 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 28.03it/s]
+2024-10-19 00:09:25 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.00it/s]
+2024-10-19 00:09:25 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:25 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:25 [logger2] INFO EPOCH:94 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 25.43it/s]
+2024-10-19 00:09:25 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.84it/s]
+2024-10-19 00:09:25 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 27.51it/s]
+2024-10-19 00:09:25 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:25 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:25 [logger2] INFO EPOCH:95 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 23.88it/s]
+2024-10-19 00:09:25 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 29.43it/s]
+2024-10-19 00:09:25 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.01it/s]
+2024-10-19 00:09:26 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:26 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:26 [logger2] INFO EPOCH:96 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.18it/s]
+2024-10-19 00:09:26 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.69it/s]
+2024-10-19 00:09:26 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 22.45it/s]
+2024-10-19 00:09:26 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:26 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:26 [logger2] INFO EPOCH:97 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 19.76it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 19.66it/s]
+2024-10-19 00:09:26 [logger2] INFO Train Loss: 0.0001, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 37.00it/s]
+2024-10-19 00:09:26 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 24.69it/s]
+2024-10-19 00:09:26 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:26 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:26 [logger2] INFO EPOCH:98 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.93it/s]
+2024-10-19 00:09:26 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.33it/s]
+2024-10-19 00:09:26 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 23.46it/s]
+2024-10-19 00:09:26 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+2024-10-19 00:09:26 [logger2] INFO ------------------------------------------------------------
+2024-10-19 00:09:26 [logger2] INFO EPOCH:99 (lr=1.0000000000000004e-08)
+Training iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Training iterations!: 100%|██████████| 2/2 [00:00<00:00, 24.28it/s]
+2024-10-19 00:09:26 [logger2] INFO Train Loss: 0.0002, Accuracy: 100.00%, AUC=1.0000
+Val iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Val iterations!: 100%|██████████| 1/1 [00:00<00:00, 34.04it/s]
+2024-10-19 00:09:26 [logger2] INFO Val Loss: 2.6130, Accuracy: 50.00%, AUC=0.5000
+Test iterations!:   0%|          | 0/1 [00:00<?, ?it/s]Test iterations!: 100%|██████████| 1/1 [00:00<00:00, 26.06it/s]
+2024-10-19 00:09:26 [logger2] INFO Test Loss: 2.6269, Accuracy: 64.29%, AUC=0.5102
+wandb: - 0.042 MB of 0.042 MB uploadedwandb: \ 0.042 MB of 0.108 MB uploadedwandb: 🚀 View run poswFalse_modFC_lr0.01 at: https://wandb.ai/vjd5zr/brain/runs/ueihtfaa
+wandb: ⭐️ View project at: https://wandb.ai/vjd5zr/brain
+wandb: Synced 6 W&B file(s), 0 media file(s), 0 artifact file(s) and 1 other file(s)
+wandb: Find logs at: ./wandb/run-20241019_000904-ueihtfaa/logs

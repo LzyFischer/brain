@@ -32,28 +32,28 @@ def pre_transform(data: Dict[str, Any]) -> Data:
     """Transform the data into torch Data type"""
     x = torch.tensor(data["FC"], dtype=torch.float32)
     # normalize the data
-    x = (x - x.mean()) / x.std()
+    x = torch.atanh(x)
+    x = torch.where(x == float('inf'), torch.tensor([0.0]), x)
+    # x = (x - x.mean()) / x.std()
     x_SC = torch.tensor(data["SC"], dtype=torch.float32)
     x_SC = (x_SC - x_SC.mean()) / x_SC.std()
 
-    edge_index_FC = torch.tensor(
-        np.stack((x > 1).nonzero()), dtype=torch.long
-    ).t().contiguous()
+    edge_index_FC = (x > 1).nonzero().t().contiguous()
     row, col = edge_index_FC
-    edge_weight_FC = torch.tensor(x[row, col], dtype=torch.float32)
+    edge_weight_FC = x[row, col]
     edge_index_SC = torch.tensor(
-        np.stack((x_SC > 1).nonzero()), dtype=torch.long
-    ).t().contiguous()
+        np.stack((data["SC"] > 1).nonzero()), dtype=torch.long
+    )
     row, col = edge_index_SC
-    edge_weight_SC = torch.tensor(x_SC[row, col], dtype=torch.float32)
+    edge_weight_SC = torch.tensor(data["SC"][row, col], dtype=torch.float32)
 
     feature = torch.tensor(data['feature'], dtype=torch.float32).unsqueeze(0) if 'feature' in data.keys() else None
     label_tensor = torch.tensor(data['label'], dtype=torch.float32).unsqueeze(0)
     return Data(
         x=x,
         x_SC=x_SC,
-        edge_index_FC=edge_index_FC,
-        edge_weight_FC=edge_weight_FC,
+        edge_index=edge_index_FC,
+        edge_weight=edge_weight_FC,
         edge_index_SC=edge_index_SC,
         edge_weight_SC=edge_weight_SC,
         y=label_tensor,
@@ -69,6 +69,7 @@ class Brain(InMemoryDataset):
         processed_path="./data/processed",
         rawdata_path=DATA_PATH,
         suffix=None,
+        args=None,
     ):
         
         assert task in [
@@ -95,7 +96,9 @@ class Brain(InMemoryDataset):
         self.data.y = torch.where(self.data.y < 0, torch.tensor([0.0]), self.data.y)
 
         """modify"""
-        self.data.y = (self.data.y)[:,[4]]
+        # task = args.task_idx
+        task = [5,7,8,9]
+        self.data.y = (self.data.y)[:,task]
         # self.data.y = torch.where(self.data.y > 0, torch.tensor([1.0]), torch.tensor([0.0]))
         """modify end"""
 

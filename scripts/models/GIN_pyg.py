@@ -86,7 +86,7 @@ class GIN_pyg(nn.Module):
        
 
     def forward(self, data):
-        x, edge_index, batch = data.x, data.edge_index_FC, data.batch
+        x, edge_index, batch = data.x, data.edge_index, data.batch
         # x = torch.ones_like(x).to(x.device)
 
         """modify"""

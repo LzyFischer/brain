@@ -10,6 +10,7 @@ from utils import utils
 from tqdm import tqdm
 from models.model_loss import weighted_mse_loss, classification_loss
 from models.MASKGCN import SymmetricMaskedGraphConv
+import torch.nn.functional as F
 
 import pdb
 
@@ -32,19 +33,23 @@ def train_epoch(model, optimizer, device, data_loader, epoch, task_type="regress
             loss = weighted_mse_loss(batch_scores, sample_i.y, weight_score)
         elif task_type == "classification":
             loss = classification_loss(batch_scores, sample_i.y)
+            if torch.isnan(loss):
+                loss = torch.tensor(0.0, requires_grad=True)
 
         else:
             raise ValueError("Invalid task type. Choose from 'regression' or 'classification'.")
+        
         mask_weights = model.layers[0].raw_edge_weight if isinstance(model.layers[0], SymmetricMaskedGraphConv) else None
         if mask_weights is not None:
             l1_reg = torch.norm(mask_weights, p=1)
             l2_reg = torch.norm(mask_weights, p=2)
-
             # Add the regularization terms to the primary loss
             loss += alpha * l1_reg + beta * l2_reg
+            
         loss.backward()
         optimizer.step()
         epoch_loss += loss.detach().item()
+        batch_scores = F.sigmoid(batch_scores) if task_type == "classification" else batch_scores
         predicted_scores.append(batch_scores.cpu().detach().numpy())
         target_scores.append(sample_i.y.cpu().detach().numpy())
 
@@ -74,6 +79,7 @@ def evaluate_network(model, device, data_loader, epoch, task_type="regression", 
                 raise ValueError("Invalid task type. Choose from 'regression' or 'classification'.")
 
             epoch_test_loss += loss.detach().item()
+            batch_scores = F.sigmoid(batch_scores) if task_type == "classification" else batch_scores
             predicted_scores.append(batch_scores.cpu().detach().numpy())
             target_scores.append(sample_i.y.cpu().detach().numpy())
 
