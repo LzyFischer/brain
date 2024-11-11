@@ -110,7 +110,6 @@ def main(args):
     train_set, val_set, test_set = torch.utils.data.random_split(
         dataset, [train_size, val_size, test_size]
     )
-    pdb.set_trace()
     """modify end"""
 
     # Prepare the dataloaders

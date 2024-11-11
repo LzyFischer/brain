@@ -38,7 +38,7 @@ def classification_loss(output, target):
     """
     # return F.binary_cross_entropy_with_logits(output, target)
     pos_weight = torch.sum(target == 0) / torch.sum(target == 1)
-    loss =  torch.nn.BCEWithLogitsLoss(pos_weight=pos_weight)(output, target)
+    loss =  torch.nn.BCEWithLogitsLoss()(output, target)
     if torch.isnan(loss):
         loss = torch.tensor(0.0, requires_grad=True)
     return loss
