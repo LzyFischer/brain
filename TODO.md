@@ -1,7 +1,69 @@
+# 3.8
+## Think
+1. 
+
+
+
+
+
+# 12.29
+## TODO
+1. 选择某一个数据集
+2. 从这个数据集里面构建correlation dataset
+   1. 简单的correlation方法
+3. 使用 mlp去做分类
+
+
+
+
+# 12.08
+## Think
+1. 对于使用的数据，先用这个好的。clean现在已有的codes。
+2. 先尝试简单的方法。MLP?没有图，GNN？用GCN会好一点？用ResGCN
+3. 更大的batch
+
+
+# 11.25 
+## Think
+1. z-score和fisher-z在2y和origin上的效果不同
+2. 现在固定seed都不一定有固定的结果
+
+
+# 11.24
+## TODO
+1. 删掉bipolar和spe phobia？
+   1. 构建数据集，从2yr开始构建label，然后根据label选择不要的部分
+   2. 对于第一年的也这么做，第一年的人数也变成和第二年的一样-》公平比较
+2. 在train的时候，balance区分train和test数据集
+   1. multi-label怎么balance？
+
+
+## Think
+1. SC的效果不好
+   1. 是不是因为edge太过于稠密了，不同的sparse程度差不多
+
+
+
+
+
+
+
 # 11.09
+## Think
+1. 5，7，8，9效果和单独的比起来？
+   1. 算是平均的结果。这个结果怎么样？
+   2. 没有balance，用了positive weight的结果。
+      1. 有pos的acc和没有的差不多。
+2. 今天主要是尽量让不同的尝试的效果越高越好。
+3. 为什么subtype val的效果会比test高呢？
+   1. 首先subtype之后只剩下602个条目
+   2. 换数量结果也是一样的
+      1. 区别在哪里？
+   3. 不同seed的结果不一样，差异甚至比加不加poslabel还大
+
 ## Exp
 1. 删掉bip,missing比较多的列，数据clean，再来做multi-label classification
-   1. 什么是bip?只算几个比较好的病类
+   1. 什么是bip?只算几个比较好的病类，用的什么normalize？
       2. Pos在100以上的其他: OCD,ADHD,ODD,Cond (5,7,8,9)
    2. 怎么做数据clean？
       1. label需要吗？先看成0目前看来missing label的数量相对少一点
@@ -9,6 +71,7 @@
          1.  normalize
 2. Anx考虑subtype的结果
    1. 把anx拆分成不同的subtype，先看statistics
+   2. 跑单独anx的多分类
 3. 考虑longitudinal的预测
    1. 只需要改变label
 4. 计算一下各个类别的correlation

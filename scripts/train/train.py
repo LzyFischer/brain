@@ -9,8 +9,11 @@ import numpy as np
 from utils import utils
 from tqdm import tqdm
 from models.model_loss import weighted_mse_loss, classification_loss
-from models.MASKGCN import SymmetricMaskedGraphConv
 import torch.nn.functional as F
+from torch.utils.data import Subset
+from torch_geometric.data import Batch
+from torch_geometric.nn import global_mean_pool
+from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
 
 import pdb
 
@@ -18,37 +21,39 @@ def train_epoch(model, optimizer, device, data_loader, epoch, task_type="regress
                 weight_score=None, alpha=None, beta=None, args=None):
     model.train()
     model = model.to(device)
+    
+    # initialize merics
     epoch_loss = 0
     predicted_scores = []
     target_scores = []
 
+    # log info
     utils.log_or_print('-' * 60, logger)
     utils.log_or_print('EPOCH:{} (lr={})'.format(epoch, optimizer.state_dict()['param_groups'][0]['lr']), logger)
 
-    for iter, sample_i in enumerate(tqdm(data_loader, desc="Training iterations!")):
+    # training begin
+    for iter, sample_i in enumerate((data_loader)):
         optimizer.zero_grad()
         sample_i = sample_i.to(device)
         batch_scores = model(sample_i)
+
+        # Compute the loss
         if task_type == "regression":
             loss = weighted_mse_loss(batch_scores, sample_i.y, weight_score)
         elif task_type == "classification":
-            loss = classification_loss(batch_scores, sample_i.y)
+            loss = classification_loss(batch_scores, sample_i.y, args=args)
             if torch.isnan(loss):
                 loss = torch.tensor(0.0, requires_grad=True)
-
         else:
             raise ValueError("Invalid task type. Choose from 'regression' or 'classification'.")
         
-        mask_weights = model.layers[0].raw_edge_weight if isinstance(model.layers[0], SymmetricMaskedGraphConv) else None
-        if mask_weights is not None:
-            l1_reg = torch.norm(mask_weights, p=1)
-            l2_reg = torch.norm(mask_weights, p=2)
-            # Add the regularization terms to the primary loss
-            loss += alpha * l1_reg + beta * l2_reg
             
         loss.backward()
         optimizer.step()
+
         epoch_loss += loss.detach().item()
+
+        # note here we use sigmoid!!!
         batch_scores = F.sigmoid(batch_scores) if task_type == "classification" else batch_scores
         predicted_scores.append(batch_scores.cpu().detach().numpy())
         target_scores.append(sample_i.y.cpu().detach().numpy())
@@ -68,18 +73,18 @@ def evaluate_network(model, device, data_loader, epoch, task_type="regression", 
     target_scores = []
 
     with torch.no_grad():
-        for iter, sample_i in enumerate(tqdm(data_loader, desc=phase + " iterations!")):
+        for iter, sample_i in enumerate(data_loader):
             batch_scores = model(sample_i.to(device))
 
             if task_type == "regression":
                 loss = weighted_mse_loss(batch_scores, sample_i.y, weight_score)
             elif task_type == "classification":
-                loss = classification_loss(batch_scores, sample_i.y)
+                loss = classification_loss(batch_scores, sample_i.y, args=args)
             else:
                 raise ValueError("Invalid task type. Choose from 'regression' or 'classification'.")
 
             epoch_test_loss += loss.detach().item()
-            batch_scores = F.sigmoid(batch_scores) if task_type == "classification" else batch_scores
+            batch_scores = F.sigmoid(batch_scores)
             predicted_scores.append(batch_scores.cpu().detach().numpy())
             target_scores.append(sample_i.y.cpu().detach().numpy())
 
@@ -90,46 +95,98 @@ def evaluate_network(model, device, data_loader, epoch, task_type="regression", 
 
 
 
-if __name__ == "__main__":
-    import json
-    from scripts.datasets.HCDP_dataset import HCDP, HCDP_DGL
-    from scripts.models.GIN import GIN
+def train_epoch_anomaly_detection(model, optimizer, device, data_loader, epoch, task_type="regression", logger=None, phase='Val', writer=None,
+                     weight_score=None, args=None):
+    model.train()
+    total_loss = 0
 
-    with open(r'F:\projects\AiyingT1MultimodalFusion\scripts\configs\GIN.json') as f:
-        config = json.load(f)
-    model = GIN(config['net_params'])
-    print(model)
+    for batch_idx, batch in enumerate(data_loader):
+        # Ensure batch contains only normal samples (positive class)
+        if hasattr(batch, "y"):
+            normal_samples = batch.y == 0  # Assuming 0 is the label for normal class
+            if normal_samples.sum() == 0:
+                continue  # Skip if no normal samples in the batch
+            # get the normal samplee index
+            index = torch.where(batch.y == 0)[0]
+            batch = Subset(batch, index)
+            # subset to databatch
+            batch = Batch.from_data_list(batch)
+        else:
+            raise AttributeError("The input data must have a 'y' attribute for anomaly detection tasks.")
 
-    buckets = {"Age in year": [(8, 12), (12, 18), (18, 23)]}
-    attributes_group = ["Age in year"]
-    # dataset1 = HCDP( task='classification',
-    #                x_attributes=['SC', 'FC'], y_attribute='age',
-    #                buckets_dict=buckets, attributes_to_group=attributes_group)
-    # print(dataset1[0], len(dataset1))
-    #
-    # dataset2 = HCDP( task='regression',
-    #                x_attributes=['SC', 'FC'], y_attribute=['nih_crycogcomp_ageadjusted', 'nih_fluidcogcomp_ageadjusted'],
-    #                buckets_dict=buckets, attributes_to_group=attributes_group)
-    # print(dataset2[0], len(dataset2))
+        batch = batch.to(device)
+        optimizer.zero_grad()
 
-    dataset3 = HCDP_DGL(task='regression',
-                        x_attributes=['FC', 'SC', 'CT'],
-                        y_attribute=['nih_crycogcomp_ageadjusted', 'nih_fluidcogcomp_ageadjusted'],
-                        buckets_dict=buckets, attributes_to_group=attributes_group)
+        # Forward pass
+        outputs = model(batch)
 
-    print(dataset3[0], len(dataset3))
+        # Compute reconstruction loss
+        target = batch.x_SC  # Target is the same as input for reconstruction
+        target = global_mean_pool(target, batch.batch)  # Global pooling for node-level input
+        loss = F.mse_loss(outputs, target)  # Example loss (can be customized)
 
-    # for sub, gi, ys in dataset3:
-    #     y = ys[0]
-    #     print(gi.ndata['x'][:, :360], gi.ndata['x'][:, 360:])
-    #     break
-    #     y_, g = model(gi, gi.ndata['x'][:, :360])
-    #     print(y_, y_.shape)
-    from torch.utils.data import DataLoader
-    from scripts.utils.utils import collate_dgl
-    train_dataloader = DataLoader(dataset3, batch_size=64, shuffle=True, collate_fn=collate_dgl)
-    optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
-    for e in range(10):
-        epoch_loss, optimizer, gs = train_epoch(model, optimizer, device=torch.device('cuda'), data_loader=train_dataloader, epoch=e, task_type="regression", logger=None, writer=None,
-                weight_score=None)
-        print(epoch_loss)
+        # Backward pass and optimizer step
+        loss.backward()
+        optimizer.step()
+
+        total_loss += loss.item()
+
+        # Logging for every N batches
+        if batch_idx % 10 == 0:
+            logger.info(f"Epoch {epoch}, Batch {batch_idx}, Loss: {loss.item():.4f}")
+
+    avg_loss = total_loss / len(data_loader)
+    logger.info(f"Epoch {epoch}, Training Loss: {avg_loss:.4f}")
+    writer.add_scalar("Train/Loss", avg_loss, epoch)
+
+    return avg_loss, optimizer
+
+
+
+def evaluate_network_anomaly_detection(model, device, data_loader, epoch, task_type="regression", logger=None, phase='Val', writer=None,
+                     weight_score=None, args=None):
+    model.eval()
+    total_loss = 0
+    all_labels = []
+    all_scores = []
+
+    with torch.no_grad():
+        for batch_idx, batch in enumerate(data_loader):
+            batch = batch.to(device)
+
+            # Forward pass
+            outputs = model(batch)
+
+            # Compute reconstruction loss
+            target = batch.x_SC
+            target = global_mean_pool(target, batch.batch)
+            loss = F.mse_loss(outputs, target, reduction="none")  # Compute loss per sample
+            loss = loss.mean(dim=1)  # Aggregate per sample
+
+            # Collect ground-truth labels and reconstruction scores
+            all_labels.append(batch.y.cpu().numpy())
+            all_scores.append(loss.cpu().numpy())
+
+    all_labels = np.concatenate(all_labels)
+    all_scores = np.concatenate(all_scores)
+
+    # Classification based on threshold
+    threshold = np.percentile(all_scores, 95)
+    predictions = (all_scores > threshold).astype(int)
+
+    # calculate roc_auc, normalize the score
+    all_scores = (all_scores - all_scores.min()) / (all_scores.max() - all_scores.min())
+    auc = roc_auc_score(all_labels, all_scores)
+
+    # Compute evaluation metrics
+    precision = precision_score(all_labels, predictions)
+    recall = recall_score(all_labels, predictions)
+    f1 = f1_score(all_labels, predictions)
+    accuracy = np.mean(all_labels == predictions)
+
+    logger.info(f"Epoch {epoch}, {phase} Accuracy: {accuracy:.4f}, Precision: {precision:.4f}, Recall: {recall:.4f}, F1: {f1:.4f}, AUC: {auc:.4f}")
+    writer.add_scalar(f"{phase}/Precision", precision, epoch)
+    writer.add_scalar(f"{phase}/Recall", recall, epoch)
+    writer.add_scalar(f"{phase}/F1", f1, epoch)
+
+    return -precision

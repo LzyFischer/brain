@@ -1,138 +1,0 @@
-wandb: Currently logged in as: vjd5zr. Use `wandb login --relogin` to force relogin
-wandb: wandb version 0.18.5 is available!  To upgrade, please run:
-wandb:  $ pip install wandb --upgrade
-wandb: Tracking run with wandb version 0.16.6
-wandb: Run data is saved locally in /home/zhenyu/program/Brain/wandb/run-20241018_141148-osl9bdue
-wandb: Run `wandb offline` to turn off syncing.
-wandb: Syncing run poswFalse_modFC_lr0.01
-wandb: ⭐️ View project at https://wandb.ai/vjd5zr/brain
-wandb: 🚀 View run at https://wandb.ai/vjd5zr/brain/runs/osl9bdue
-2024-10-18 14:11:49 [logger2] INFO Namespace(lr=0.01, batch_size=32, max_epochs=100, L2=0.0001, dropout=0.1, seed=100, config='GIN_classification', task='classification', x_attributes=['FC', 'SC'], y_attribute=['nih_crycogcomp_ageadjusted', 'nih_fluidcogcomp_ageadjusted'], attributes_group=['Age in year'], train_val_test=[0.7, 0.1, 0.2], dataset='dglHCP', sparse=30, gl=False, weight_score=[0.5, 0.5], if_pos_weight=False, modality='FC', site=8)
-2024-10-18 14:11:49 [logger2] INFO {'model': 'GIN_pyg', 'model_save_suffix': 'GIN_pyg', 'pretrain': False, 'pretrain_model_name': 'hcdp/pretrained/2023_10_30_19_10dglHCP_GIN_GIN_regression_30.pth', 'net_params': {'num_layers': 3, 'in_channels': 379, 'hidden_channels': 64, 'out_channels': 128, 'dropout': 0.1, 'n_vars': 1, 'activation': 'relu', 'readout': 'mean', 'additional_feature': 0}, 'dataset': 'dglHCP'}
-/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/torch_geometric/data/in_memory_dataset.py:300: UserWarning: It is not recommended to directly access the internal storage format `data` of an 'InMemoryDataset'. If you are absolutely certain what you are doing, access the internal storage via `InMemoryDataset._data` instead to suppress this warning. Alternatively, you can access stacked individual attributes of every graph via `dataset.{attr_name}`.
-  warnings.warn(msg)
-2024-10-18 14:11:59 [logger2] INFO ############################################################
-2024-10-18 14:12:04 [logger2] INFO GIN_pyg(
-  (layers): ModuleList(
-    (0): GCNConv(379, 64)
-    (1-3): 3 x GCNConv(64, 64)
-  )
-  (x_linear): Linear(in_features=379, out_features=64, bias=True)
-  (dropout): Dropout(p=0.1, inplace=False)
-  (predict): Linear(in_features=64, out_features=1, bias=True)
-)
-2024-10-18 14:12:04 [logger2] INFO ------------------------------------------------------------
-2024-10-18 14:12:04 [logger2] INFO EPOCH:0 (lr=0.01)
-Dataset length:  670
-Training iterations!:   0%|          | 0/15 [00:00<?, ?it/s]Training iterations!:   7%|▋         | 1/15 [00:09<02:14,  9.64s/it]Training iterations!:  13%|█▎        | 2/15 [00:14<01:32,  7.09s/it]Training iterations!:  20%|██        | 3/15 [00:19<01:12,  6.04s/it]Training iterations!:  27%|██▋       | 4/15 [00:24<01:00,  5.48s/it]Training iterations!:  33%|███▎      | 5/15 [00:29<00:52,  5.23s/it]Training iterations!:  40%|████      | 6/15 [00:33<00:45,  5.06s/it]Training iterations!:  47%|████▋     | 7/15 [00:38<00:39,  4.93s/it]Training iterations!:  53%|█████▎    | 8/15 [00:43<00:33,  4.86s/it]Training iterations!:  60%|██████    | 9/15 [00:47<00:28,  4.80s/it]Training iterations!:  67%|██████▋   | 10/15 [00:52<00:23,  4.77s/it]Training iterations!:  73%|███████▎  | 11/15 [00:57<00:19,  4.77s/it]Training iterations!:  80%|████████  | 12/15 [01:02<00:14,  4.86s/it]Training iterations!:  87%|████████▋ | 13/15 [01:07<00:09,  4.91s/it]Training iterations!:  93%|█████████▎| 14/15 [01:12<00:05,  5.02s/it]Training iterations!: 100%|██████████| 15/15 [01:15<00:00,  4.42s/it]Training iterations!: 100%|██████████| 15/15 [01:15<00:00,  5.05s/it]
-2024-10-18 14:13:20 [logger2] INFO Train Loss: 9.5877, Accuracy: 51.07%, AUC=0.5301
-Val iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Val iterations!:  50%|█████     | 1/2 [00:09<00:09,  9.40s/it]Val iterations!: 100%|██████████| 2/2 [00:09<00:00,  4.15s/it]Val iterations!: 100%|██████████| 2/2 [00:09<00:00,  4.95s/it]
-2024-10-18 14:13:30 [logger2] INFO Val Loss: 3.9564, Accuracy: 49.25%, AUC=0.4581
-Test iterations!:   0%|          | 0/3 [00:00<?, ?it/s]Test iterations!:  33%|███▎      | 1/3 [00:10<00:20, 10.24s/it]Test iterations!:  67%|██████▋   | 2/3 [00:20<00:10, 10.02s/it]Test iterations!: 100%|██████████| 3/3 [00:21<00:00,  5.94s/it]Test iterations!: 100%|██████████| 3/3 [00:21<00:00,  7.07s/it]
-2024-10-18 14:13:51 [logger2] INFO Test Loss: 2.9785, Accuracy: 52.59%, AUC=0.4659
-2024-10-18 14:13:51 [logger2] INFO ------------------------------------------------------------
-2024-10-18 14:13:51 [logger2] INFO EPOCH:1 (lr=0.01)
-Training iterations!:   0%|          | 0/15 [00:00<?, ?it/s]Training iterations!:   7%|▋         | 1/15 [00:04<01:09,  4.99s/it]Training iterations!:  13%|█▎        | 2/15 [00:09<01:01,  4.75s/it]Training iterations!:  20%|██        | 3/15 [00:14<00:57,  4.75s/it]Training iterations!:  27%|██▋       | 4/15 [00:19<00:51,  4.72s/it]Training iterations!:  33%|███▎      | 5/15 [00:24<00:48,  4.82s/it]Training iterations!:  40%|████      | 6/15 [00:29<00:45,  5.04s/it]Training iterations!:  47%|████▋     | 7/15 [00:34<00:39,  4.99s/it]Training iterations!:  53%|█████▎    | 8/15 [00:39<00:34,  4.96s/it]Training iterations!:  60%|██████    | 9/15 [00:44<00:29,  4.90s/it]Training iterations!:  67%|██████▋   | 10/15 [00:49<00:24,  4.96s/it]Training iterations!:  73%|███████▎  | 11/15 [00:54<00:20,  5.00s/it]Training iterations!:  80%|████████  | 12/15 [00:58<00:14,  4.92s/it]Training iterations!:  87%|████████▋ | 13/15 [01:03<00:09,  4.87s/it]Training iterations!:  93%|█████████▎| 14/15 [01:08<00:04,  4.92s/it]Training iterations!: 100%|██████████| 15/15 [01:11<00:00,  4.33s/it]Training iterations!: 100%|██████████| 15/15 [01:11<00:00,  4.78s/it]
-2024-10-18 14:15:03 [logger2] INFO Train Loss: 1.3447, Accuracy: 49.15%, AUC=0.4895
-Val iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Val iterations!:  50%|█████     | 1/2 [00:10<00:10, 10.61s/it]Val iterations!: 100%|██████████| 2/2 [00:11<00:00,  4.71s/it]Val iterations!: 100%|██████████| 2/2 [00:11<00:00,  5.60s/it]
-2024-10-18 14:15:14 [logger2] INFO Val Loss: 0.6926, Accuracy: 50.75%, AUC=0.5544
-Test iterations!:   0%|          | 0/3 [00:00<?, ?it/s]Test iterations!:  33%|███▎      | 1/3 [00:09<00:19,  9.82s/it]Test iterations!:  67%|██████▋   | 2/3 [00:20<00:10, 10.31s/it]Test iterations!: 100%|██████████| 3/3 [00:21<00:00,  6.06s/it]Test iterations!: 100%|██████████| 3/3 [00:21<00:00,  7.16s/it]
-2024-10-18 14:15:35 [logger2] INFO Test Loss: 0.7528, Accuracy: 54.07%, AUC=0.4274
-2024-10-18 14:15:35 [logger2] INFO ------------------------------------------------------------
-2024-10-18 14:15:35 [logger2] INFO EPOCH:2 (lr=0.01)
-Training iterations!:   0%|          | 0/15 [00:00<?, ?it/s]Training iterations!:   7%|▋         | 1/15 [00:05<01:12,  5.19s/it]Training iterations!:  13%|█▎        | 2/15 [00:10<01:05,  5.04s/it]Training iterations!:  20%|██        | 3/15 [00:15<01:02,  5.20s/it]Training iterations!:  27%|██▋       | 4/15 [00:24<01:07,  6.18s/it]Training iterations!:  33%|███▎      | 5/15 [00:30<01:02,  6.21s/it]Training iterations!:  40%|████      | 6/15 [00:37<00:56,  6.25s/it]Training iterations!:  47%|████▋     | 7/15 [00:43<00:49,  6.18s/it]Training iterations!:  53%|█████▎    | 8/15 [00:49<00:43,  6.20s/it]Training iterations!:  60%|██████    | 9/15 [00:56<00:37,  6.27s/it]Training iterations!:  67%|██████▋   | 10/15 [01:02<00:31,  6.37s/it]Training iterations!:  73%|███████▎  | 11/15 [01:08<00:25,  6.30s/it]Training iterations!:  80%|████████  | 12/15 [01:14<00:18,  6.27s/it]Training iterations!:  87%|████████▋ | 13/15 [01:21<00:12,  6.21s/it]Training iterations!:  93%|█████████▎| 14/15 [01:27<00:06,  6.29s/it]Training iterations!: 100%|██████████| 15/15 [01:31<00:00,  5.59s/it]Training iterations!: 100%|██████████| 15/15 [01:31<00:00,  6.10s/it]
-2024-10-18 14:17:03 [logger2] INFO Train Loss: 0.7361, Accuracy: 48.50%, AUC=0.4902
-Val iterations!:   0%|          | 0/2 [00:00<?, ?it/s]Val iterations!:  50%|█████     | 1/2 [00:12<00:12, 12.50s/it]Val iterations!: 100%|██████████| 2/2 [00:13<00:00,  5.51s/it]Val iterations!: 100%|██████████| 2/2 [00:13<00:00,  6.56s/it]
-2024-10-18 14:17:16 [logger2] INFO Val Loss: 0.6489, Accuracy: 50.75%, AUC=0.4412
-Test iterations!:   0%|          | 0/3 [00:00<?, ?it/s]Test iterations!:  33%|███▎      | 1/3 [00:12<00:24, 12.48s/it]Exception in thread ChkStopThr:
-Traceback (most recent call last):
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/threading.py", line 980, in _bootstrap_inner
-    self.run()
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/threading.py", line 917, in run
-    self._target(*self._args, **self._kwargs)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/wandb_run.py", line 286, in check_stop_status
-    self._loop_check_status(
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/wandb_run.py", line 224, in _loop_check_status
-    local_handle = request()
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface.py", line 840, in deliveException in thread ChkStopThr:
-Traceback (most recent call last):
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/threading.py", line 980, in _bootstrap_inner
-    self.run()
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/threading.py", line 917, in run
-    self._target(*self._args, **self._kwargs)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/wandb_run.py", line 286, in check_stop_status
-    self._loop_check_status(
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/wandb_run.py", line 224, in _loop_check_status
-    local_handle = request()
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface.py", line 840, in deliver_stop_status
-    return self._deliver_stop_status(status)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface_shared.py", line 494, in _deliver_stop_status
-    return self._deliver_record(record)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface_shared.py", line 459, in _deliver_record
-    handle = mailbox._deliver_record(record, interface=self)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/lib/mailbox.py", line 455, in _deliver_record
-    interface._publish(record)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface_sock.py", line 51, in _publish
-    self._sock_client.send_record_publish(record)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/lib/sock_client.py", line 221, in send_record_publish
-    self.send_server_request(server_req)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/lib/sock_client.py", line 155, in send_server_request
-    self._send_message(msg)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/lib/sock_client.py", line 152, in _send_message
-    self._sendall_with_error_handle(header + data)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/lib/sock_client.py", line 130, in _sendall_with_error_handle
-    sent = self._sock.send(data)
-BrokenPipeError: [Errno 32] Broken pipe
-Exception in thread IntMsgThr:
-Traceback (most recent call last):
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/threading.py", line 980, in _bootstrap_inner
-Exception in thread NetStatThr:
-Traceback (most recent call last):
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/threading.py", line 980, in _bootstrap_inner
-    self.run()
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/threading.py", line 917, in run
-    self._target(*self._args, **self._kwargs)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/wandb_run.py", line 268, in check_network_status
-    self._loop_check_status(
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/wandb_run.py", line 224, in _loop_check_status
-    local_handle = request()
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface.py", line 848, in deliver_network_status
-    return self._deliver_network_status(status)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface_shared.py", line 510, in _deliver_network_status
-    return self._deliver_record(record)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface_shared.py", line 459, in _deliver_record
-    handle = mailbox._deliver_record(record, interface=self)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/lib/mailbox.py", line 455, in _deliver_record
-    interface._publish(record)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface_sock.py", line 51, in _publish
-    self._sock_client.send_record_publish(record)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/lib/sock_client.py", line 221, in send_record_publish
-    self.send_server_request(server_req)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/lib/sock_client.py", line 155, in send_server_request
-    self._send_message(msg)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/lib/sock_client.py", line 152, in _send_message
-    self._sendall_with_error_handle(header + data)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/lib/sock_client.py", line 130, in _sendall_with_error_handle
-    sent = self._sock.send(data)
-BrokenPipeError: [Errno 32] Broken pipe
-    self.run()
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/threading.py", line 917, in run
-    self._target(*self._args, **self._kwargs)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/wandb_run.py", line 300, in check_internal_messages
-    self._loop_check_status(
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/wandb_run.py", line 224, in _loop_check_status
-    local_handle = request()
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface.py", line 856, in deliver_internal_messages
-    return self._deliver_internal_messages(internal_message)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface_shared.py", line 516, in _deliver_internal_messages
-    return self._deliver_record(record)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface_shared.py", line 459, in _deliver_record
-    handle = mailbox._deliver_record(record, interface=self)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/lib/mailbox.py", line 455, in _deliver_record
-    interface._publish(record)
-  File "/home/zhenyu/miniconda3/envs/brain/lib/python3.9/site-packages/wandb/sdk/interface/interface_sock.py", line 51, in _publish
-    self._sock_client.send_Test iterations!:  67%|██████▋   | 2/3 [00:24<00:11, 11.97s/it]Test iterations!: 100%|██████████| 3/3 [00:25<00:00,  7.14s/it]Test iterations!: 100%|██████████| 3/3 [00:25<00:00,  8.49s/it]
-2024-10-18 14:17:42 [logger2] INFO Test Loss: 0.7361, Accuracy: 45.19%, AUC=0.4357
-2024-10-18 14:17:42 [logger2] INFO ------------------------------------------------------------
-2024-10-18 14:17:42 [logger2] INFO EPOCH:3 (lr=0.01)
-Training iterations!:   0%|          | 0/15 [00:00<?, ?it/s]Training iterations!:   7%|▋         | 1/15 [00:06<01:27,  6.23s/it]Training iterations!:  13%|█▎        | 2/15 [00:12<01:21,  6.28s/it]Training iterations!:  20%|██        | 3/15 [00:18<01:13,  6.16s/it]Training iterations!:  27%|██▋       | 4/15 [00:24<01:08,  6.22s/it]Training iterations!:  33%|███▎      | 5/15 [00:31<01:02,  6.26s/it]Training iterations!:  40%|████      | 6/15 [00:36<00:54,  6.02s/it]Training iterations!:  47%|████▋     | 7/15 [00:34<00:38,  4.85s/it]Training iterations!:  53%|█████▎    | 8/15 [00:39<00:33,  4.82s/it]Training iterations!:  60%|██████    | 9/15 [00:44<00:29,  4.98s/it]Training iterations!:  67%|██████▋   | 10/15 [00:49<00:24,  4.91s/it]Training iterations!:  73%|███████▎  | 11/15 [00:54<00:19,  4.88s/it]Training iterations!:  80%|████████  | 12/15 [00:59<00:15,  5.11s/it]

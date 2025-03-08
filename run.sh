@@ -2,7 +2,7 @@
 
 
 # node
-for task_idx in 1 4 5 7 8 9
+for seed in 0 1 2 3
 do
     for modality in "FC"
     do
@@ -64,16 +64,16 @@ do
                     export CUDA_VISIBLE_DEVICES=$chosen_gpu
 
 
-                    info="task: ${task_idx}, modality: ${modality}"
+                    info=": seed: ${seed}"
 
                     echo "Start ${info}"
-                    output_file="logs/task_${task_idx}_modality_${modality}_site11.txt"
+                    output_file="logs/seed_${seed}.txt"
 
                     nohup python scripts/main_brain.py \
-                        --task_idx $task_idx \
-                        --modality $modality > $output_file 2>&1 &
+                        --seed $seed > $output_file 2>&1 &
                     pid=$!
-                    sleep 60
+                    wait $pid
+                    # sleep 30
                 done
             done
         done

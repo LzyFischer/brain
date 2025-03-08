@@ -2,7 +2,7 @@
 
 
 # node
-for site in 7 8 9
+for seed in 2 3
 do
     for modality in "FC"
     do
@@ -51,6 +51,7 @@ do
 
                     # Choose GPU with the least load
                     chosen_gpu=$(choose_gpu_with_least_load)
+                    printf "Chose GPU %d with load %d.\n" $chosen_gpu $(get_gpu_load $chosen_gpu)
 
                     if [ -z "$chosen_gpu" ]; then
                         echo "No available GPUs or unable to determine GPU load."
@@ -64,16 +65,15 @@ do
                     export CUDA_VISIBLE_DEVICES=$chosen_gpu
 
 
-                    info="site: ${site}, modality: ${modality}"
+                    info=": seed: ${seed}"
 
                     echo "Start ${info}"
-                    output_file="logs/site)_${site}_modality_${modality}.txt"
+                    output_file="logs/seed_${seed}.txt"
 
                     nohup python scripts/main_brain.py \
-                        --site $site \
-                        --modality $modality > $output_file 2>&1 &
+                        --seed $seed > $output_file 2>&1 &
                     pid=$!
-                    sleep 20
+                    wait $pid
                 done
             done
         done

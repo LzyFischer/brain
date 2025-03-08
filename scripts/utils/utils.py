@@ -14,10 +14,16 @@ from scipy import sparse as sp
 import dgl
 import torch.nn.functional as F
 from models.model_loss import weighted_mse_loss, classification_loss
-from sklearn.metrics import roc_curve, auc, roc_auc_score
+from sklearn.metrics import roc_curve, auc, roc_auc_score, recall_score, precision_score
 from sklearn.preprocessing import label_binarize
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, accuracy_score, f1_score
 import pdb
+from sklearn.manifold import SpectralEmbedding
+
+# surpress warnings UndefinedMetricWarning
+import warnings
+warnings.filterwarnings("ignore")
+
 
 LOGGING_DIC = {
     'version': 1.0,
@@ -76,6 +82,9 @@ LOGGING_DIC = {
 
 
 
+
+
+
 def get_logger(name, path='results/loggers'):
     """
     get the logger
@@ -126,84 +135,45 @@ def log_metrics(epoch_loss, predicted_scores, target_scores, task_type, phase, e
     elif task_type == "classification":
         # Convert predicted scores to class label
         predicted_scores = np.concatenate(predicted_scores, axis=0)
+        target_scores = np.concatenate(target_scores, axis=0)
+        threshold = 0.5
 
-        # Convert predicted scores to class label
-        # predicted_labels = np.argmax(predicted_scores, axis=1)
-        predicted_labels = np.where(predicted_scores > 0.5, 1, 0).squeeze()
-        true_labels = np.concatenate(target_scores)
-        correct_predictions = np.sum(predicted_labels == true_labels, axis=0)
-
-        # Calculate the accuracy
-        # accuracy = correct_predictions / len(true_labels) * 100
-        # accuracy = accuracy_score(true_labels.astype(float), predicted_labels.astype(float))
-        accuracy = correct_predictions.mean() / len(true_labels) * 100
-        # Assuming there are n_classes
         n_classes = predicted_scores.shape[1]
-        # Compute ROC and AUC for either binary or multiclass classification
-        if n_classes <= 2:
-            fpr, tpr, _ = roc_curve(true_labels, predicted_scores[:, 0])
-            roc_auc = auc(fpr, tpr)
-            # For Tensorboard: log the curve points
+        if n_classes <=2:
+            accuracy = accuracy_score(target_scores, (predicted_scores > threshold).astype(float))
+            recall = recall_score(target_scores, (predicted_scores > threshold).astype(float))
+            precision = precision_score(target_scores, (predicted_scores > threshold).astype(float))
+            f1 = f1_score(target_scores, (predicted_scores > threshold).astype(float))
+            auc = roc_auc_score(target_scores, predicted_scores)
+            log_or_print('{} Loss: {:.4f}, Accuracy: {:.2f}%, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}'.format(phase, epoch_loss, accuracy, recall, precision, f1, auc), logger)
             if writer:
-                writer.add_scalar('Metrics/AUC_' + phase, roc_auc, epoch)
-
-                for i in range(len(fpr)):
-                    writer.add_scalars('ROC_curve_' + phase,{'False Positive Rate': fpr[i], 'True Positive Rate': tpr[i]}, i)
+                writer.add_scalar('Loss/' + phase, epoch_loss, epoch)
+                writer.add_scalar('Metrics/Accuracy_' + phase, accuracy, epoch)
+                writer.add_scalar('Metrics/Recall_' + phase, recall, epoch)
+                writer.add_scalar('Metrics/Precision_' + phase, precision, epoch)
+                writer.add_scalar('Metrics/F1_' + phase, f1, epoch)
+                writer.add_scalar('Metrics/AUC_' + phase, auc, epoch)
         else:
-            if multi_label:
-                # Compute ROC and AUC for multilabel classification
-                fpr = dict()
-                tpr = dict()
-                roc_auc = dict()
-                for i in range(n_classes):
-                    # pdb.set_trace()
-                    if true_labels[:, i].sum() == 0:
-                        continue
-                    try:
-                        fpr[i], tpr[i], _ = roc_curve(true_labels[:, i], predicted_scores[:, i])
-                    except:
-                        pdb.set_trace()
-                    if not (np.isnan(fpr[i]).any() or np.isnan(tpr[i]).any()):
-                        roc_auc[i] = auc(fpr[i], tpr[i])
-                        # For Tensorboard: log the curve points for each class
-                        if writer:
-                            writer.add_scalar('Metrics/AUC_class_' + str(i) + "_" + phase, roc_auc[i], epoch)
-                            for j in range(len(fpr[i])):
-                                writer.add_scalars('ROC_curve_class_' + str(i) + "_" + phase,
-                                                {'False Positive Rate': fpr[i][j], 'True Positive Rate': tpr[i][j]}, j)
+            # calculate the tpr, tnr, fpr, fnr for each class
+            accuracy_all = []
+            recall_all = []
+            precision_all = []
+            f1_all = []
+            auc_all = []
+            for i in range(predicted_scores.shape[1]):
+                accuracy_all.append(accuracy_score(target_scores[:, i], (predicted_scores[:, i] > threshold).astype(float)))
+                recall_all.append(recall_score(target_scores[:, i], (predicted_scores[:, i] > threshold).astype(float)))
+                precision_all.append(precision_score(target_scores[:, i], (predicted_scores[:, i] > threshold).astype(float)))
+                f1_all.append(f1_score(target_scores[:, i], (predicted_scores[:, i] > threshold).astype(float)))
+                auc_all.append(roc_auc_score(target_scores[:, i], predicted_scores[:, i]))
+                log_or_print('{} Loss: {:.4f}, Accuracy: {:.2f}%, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}'.format(phase, epoch_loss, accuracy_all[i], recall_all[i], precision_all[i], f1_all[i], auc_all[i]), logger)
+            accuracy = np.mean(accuracy_all)
+            recall = np.mean(recall_all)
+            precision = np.mean(precision_all)
+            f1 = np.mean(f1_all)
+            auc = np.mean(auc_all)
+            log_or_print('{} Loss: {:.4f}, Accuracy_Average: {:.2f}%, Recall_Average: {:.4f}, Precision_Average: {:.4f}, F1_Average: {:.4f}, AUC_average: {:.4f}'.format(phase, epoch_loss, accuracy, recall, precision, f1, auc), logger)
 
-                # # Log the AUC values
-                # for i in roc_auc.keys():
-                #     log_or_print(f"{phase} Loss: {epoch_loss:.4f}, AUC for class {i} = {roc_auc[i]:.4f}, Accuracy: {accuracy:.2f}%",
-                #                  logger)
-            else:
-                # Binarize the labels for one-vs-all ROC computation
-                true_labels_bin = label_binarize(true_labels, classes=np.arange(n_classes))
-                false_positive_rate = dict()
-                true_positive_rate = dict()
-                roc_auc = dict()
-                for i in range(n_classes):
-                    false_positive_rate[i], true_positive_rate[i], _ = roc_curve(true_labels_bin[:, i],
-                                                                                predicted_scores[:, i])
-                    roc_auc[i] = auc(false_positive_rate[i], true_positive_rate[i])
-
-                    # For Tensorboard: log the curve points for each class
-                    if writer:
-                        writer.add_scalar('Metrics/AUC_class_' + str(i) + "_" + phase, roc_auc[i], epoch)
-                        for j in range(len(false_positive_rate[i])):
-                            writer.add_scalars('ROC_curve_class_' + str(i) + "_" + phase,
-                                            {'False Positive Rate': false_positive_rate[i][j],
-                                                'True Positive Rate': true_positive_rate[i][j]}, j)
-
-        # log the AUC values
-        if n_classes <= 2:
-            log_or_print(f"{phase} Loss: {epoch_loss:.4f}, Accuracy: {accuracy:.2f}%, AUC={roc_auc:.4f}", logger)
-        else:
-            # for i in roc_auc.keys():
-            #     log_or_print(f"{phase} Loss: {epoch_loss:.4f}, AUC for class {i} = {roc_auc[i]:.4f}, Accuracy: {accuracy:.2f}%",
-            #                  logger)
-            roc_auc = np.mean(list(roc_auc.values()))
-            log_or_print(f"{phase} Loss: {epoch_loss:.4f}, Accuracy: {accuracy:.2f}%, AUC={roc_auc:.4f}", logger)
 
 
 def evaluate_mat(predicted, target, method):
@@ -285,3 +255,30 @@ class EarlyStopping():
         else:
             self.counter = 0
 
+
+
+def weighted_sample(dataset, sample_type):
+    if sample_type == "oversample":
+        n_samples = dataset.y.shape[0]
+        n_pos = (dataset.y == 1).sum().item()
+        n_neg = n_samples - n_pos
+        n_minority = min(n_pos, n_neg)
+        n_majority = max(n_pos, n_neg)
+        n_add = n_majority - n_minority
+        idx_minority = torch.where(dataset.y == 1)[0]
+        idx_majority = torch.where(dataset.y == 0)[0]
+        idx_add = torch.randint(0, n_minority, (n_add,))
+        idx_add = idx_minority[idx_add]
+        data_add = dataset[idx_add]
+        dataY = dataset.y
+        dataset = torch.utils.data.ConcatDataset([dataset, data_add])
+        dataset.y = torch.cat([dataY, data_add.y], dim=0)
+    return dataset
+
+
+def get_spectral_embedding(adj, d):
+    adj_ = adj.data.cpu().numpy()
+    emb = SpectralEmbedding(n_components=d)
+    res = emb.fit_transform(adj_)
+    x = torch.from_numpy(res).float().cuda()
+    return x

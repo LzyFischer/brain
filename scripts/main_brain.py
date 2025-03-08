@@ -20,12 +20,17 @@ import time
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.tensorboard import SummaryWriter
 import utils.utils as utils
-from train.train import train_epoch, evaluate_network
+from train.train import train_epoch, evaluate_network, train_epoch_anomaly_detection, evaluate_network_anomaly_detection
 from datasets.Brain_dataset import Brain
 from torch_geometric.loader import DataLoader
+from skmultilearn.model_selection.iterative_stratification import IterativeStratification
 import sys
 import pdb
 import wandb
+import numpy as np
+from sklearn.metrics import roc_auc_score
+import torch.nn as nn
+
 
 sys.path.append(os.path.dirname((os.path.abspath(__file__))))
 
@@ -34,7 +39,7 @@ sys.path.append(os.path.dirname((os.path.abspath(__file__))))
 def main(args):
 
     now = str(time.strftime("%Y_%m_%d_%H_%M"))
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     # set random seed for reproducing results
     if args.seed:
         utils.seed_it(args.seed)
@@ -43,12 +48,15 @@ def main(args):
     config_file = pj("./scripts/configs", args.config + ".json")
     with open(config_file) as f:
         config = json.load(f)
+    # combine the config and args
+    
     config["dataset"] = args.dataset
     if args.dropout:
         config["net_params"]["dropout"] = args.dropout
     if args.x_attributes is None:
         args.x_attributes = ["FC", "SC"]
 
+    # log the config and args information
     wandb.init(project="brain", name=f"posw{args.if_pos_weight}_mod{args.modality}_lr{args.lr}")
     wandb.config.update(args)
     wandb.config.update(config)
@@ -86,52 +94,48 @@ def main(args):
     )
 
     # define dataset
-
     dataset = Brain(
         task=args.task,
         x_attributes=args.x_attributes,
         args=args,
     )
-    """modify"""
-    # non_zero_indices = torch.where(dataset.y.sum(1) != 0)[0]
-    # zero_indices = torch.where(dataset.y.sum(1) == 0)[0][: len(non_zero_indices)]
-    # non_zero_indices = torch.cat((non_zero_indices, zero_indices), dim=0)
-    # dataset = dataset[non_zero_indices]
-    """modify end"""
     print("Dataset length: ", len(dataset))
 
-
-    model_save_dir = pj(abspath("scripts/results"), save_name + ".pth")
-    # split the dataset and define the dataloader
-    train_size = int(args.train_val_test[0] * len(dataset))
-    val_size = int(args.train_val_test[1] * len(dataset))
-    test_size = len(dataset) - train_size - val_size
-    """modify"""
-    train_set, val_set, test_set = torch.utils.data.random_split(
-        dataset, [train_size, val_size, test_size]
-    )
-    """modify end"""
-
+    # split datasets
+    train_test_split = 0.6
+    test_val_split = 0.8
+    train_set, val_set, test_set = dataset[:int(train_test_split * len(dataset))], dataset[int(train_test_split * len(dataset)):int(test_val_split * len(dataset))], dataset[int(test_val_split * len(dataset)):]
     # Prepare the dataloaders
-    train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
-    val_loader = DataLoader(val_set, batch_size=64, shuffle=False)
-    test_loader = DataLoader(test_set, batch_size=64, shuffle=False)
+    train_dataloader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
+    val_dataloader = DataLoader(val_set, batch_size=64, shuffle=False)
+    test_dataloader = DataLoader(test_set, batch_size=64, shuffle=False)
     logger.info("#" * 60)
+
+    # dataset = Brain()
+    # train_indices = torch.randperm(len(dataset))[:int(0.8 * len(dataset))]
+    # test_indices = 
+    # pdb.set_trace()
+    # train_dataset = dataset[train_indices]
+    # test_dataset = dataset[test_indices]
+    # train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
+    # test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False)
+    # val_dataloader = 
+
 
     # Define the model
     model = load_model(config, args)
     model.to(device)
     logger.info(model)
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.L2)
-    if config["pretrain"]:
-        checkpoint = torch.load(abspath(pj("results", config["pretrain_model_name"])))
-        model.load_state_dict(checkpoint["model"])
-        print("Using pretrained model: ", config["pretrain_model_name"])
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     # Training preparation
-    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, "min", patience=10)
+    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=10)
     min_test_loss = 1e12
     early_stopping = utils.EarlyStopping(tolerance=10, min_delta=0)
+
+
+    criterion = nn.BCEWithLogitsLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     # Training
     for epoch in range(args.max_epochs):
@@ -139,7 +143,7 @@ def main(args):
             model,
             optimizer,
             device,
-            data_loader=train_loader,
+            data_loader=train_dataloader,
             epoch=epoch,
             task_type=args.task,
             logger=logger,
@@ -150,7 +154,7 @@ def main(args):
         epoch_loss_val = evaluate_network(
             model,
             device,
-            val_loader,
+            val_dataloader,
             epoch,
             task_type=args.task,
             logger=logger,
@@ -162,7 +166,7 @@ def main(args):
         epoch_loss_test = evaluate_network(
             model,
             device,
-            test_loader,
+            test_dataloader,
             epoch,
             task_type=args.task,
             logger=logger,
@@ -171,7 +175,7 @@ def main(args):
             weight_score=args.weight_score,
             args=args,
         )
-        scheduler.step(epoch_loss_val)
+        # scheduler.step(epoch_loss_val)
 
         writer.add_scalar("LR", optimizer.param_groups[0]["lr"], epoch)
         writer.add_scalars(
@@ -184,12 +188,12 @@ def main(args):
             global_step=epoch,
         )
 
-        scheduler.step(epoch_loss_train)
+        # scheduler.step(epoch_loss_train)
+        
+        # save the best model
         epoch_loss_test = epoch_loss_train
         if epoch_loss_test < min_test_loss:
             min_test_loss = epoch_loss_test
-            # model_state = copy.deepcopy(model.state_dict())
-            # optimizer_state = copy.deepcopy(optimizer.state_dict())
             checkpoint = {
                 "model": model.state_dict(),
                 "optimizer": optimizer.state_dict(),
@@ -199,28 +203,30 @@ def main(args):
         if early_stopping.early_stop:
             logger.info("We are at epoch: {}".format(epoch))
             break
+
     writer.close()
+    model_save_dir = pj(abspath("scripts/results"), save_name + ".pth")
     torch.save(checkpoint, model_save_dir)
 
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
     parser = argparse.ArgumentParser(description="HCDP Classification")
-    parser.add_argument("--lr", default=1e-2, type=float, help="learning rate")
-    parser.add_argument("--batch_size", default=64, type=int, help="batch size")
+    parser.add_argument("--lr", default=1e-3, type=float, help="learning rate")
+    parser.add_argument("--batch_size", default=128, type=int, help="batch size")
     parser.add_argument(
-        "--max_epochs", default=100, type=int, help="max number of epochs"
+        "--max_epochs", default=50, type=int, help="max number of epochs"
     )
-    parser.add_argument("--L2", default=1e-4, type=float, help="L2 regularization")
+    parser.add_argument("--L2", default=1e-6, type=float, help="L2 regularization")
     parser.add_argument("--dropout", default=0.1, help="dropout rate")
-    parser.add_argument("--seed", default=100, type=int, help="random seed")
+    parser.add_argument("--seed", default=42, type=int, help="random seed")
     parser.add_argument(
-        "--config", default="GIN_classification", help="config file name"
+        "--config", default="MLP_classification", help="config file name"
     )
     parser.add_argument(
         "--task",
         default="classification",
-        choices=["regression", "classification"],
+        choices=["regression", "classification", "anomaly_detection"],
         help="task type",
     )
     parser.add_argument("--x_attributes", default=None, help="modalities")
@@ -242,6 +248,8 @@ if __name__ == "__main__":
     parser.add_argument("--if_pos_weight", default="False", help="if pos weight", type=str)
     parser.add_argument("--modality", default="FC", help="modality", type=str, choices=["FC", "SC", "Both"])
     parser.add_argument("--task_idx", default=0, help="pretrain", type=int)
+    parser.add_argument("--loss_type", default="weighted_bce", help="loss type", choices=["bce", "focal", "weighted_bce"])
+    parser.add_argument("--focal_gamma", default=2, help="focal gamma")
 
     args = parser.parse_args()
 
