@@ -248,7 +248,7 @@ if __name__ == "__main__":
     parser.add_argument("--if_pos_weight", default="False", help="if pos weight", type=str)
     parser.add_argument("--modality", default="FC", help="modality", type=str, choices=["FC", "SC", "Both"])
     parser.add_argument("--task_idx", default=0, help="pretrain", type=int)
-    parser.add_argument("--loss_type", default="weighted_bce", help="loss type", choices=["bce", "focal", "weighted_bce"])
+    parser.add_argument("--loss_type", default="focal", help="loss type", choices=["bce", "focal", "weighted_bce"])
     parser.add_argument("--focal_gamma", default=2, help="focal gamma")
 
     args = parser.parse_args()
