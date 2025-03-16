@@ -16,76 +16,81 @@ import torch.nn.functional as F
 from models.model_loss import weighted_mse_loss, classification_loss
 from sklearn.metrics import roc_curve, auc, roc_auc_score, recall_score, precision_score
 from sklearn.preprocessing import label_binarize
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, accuracy_score, f1_score
+from sklearn.metrics import (
+    mean_squared_error,
+    mean_absolute_error,
+    r2_score,
+    accuracy_score,
+    f1_score,
+)
 import pdb
 from sklearn.manifold import SpectralEmbedding
 
+from torch_geometric.data import Dataset
+from sklearn.utils import resample
+
 # surpress warnings UndefinedMetricWarning
 import warnings
+
 warnings.filterwarnings("ignore")
 
 
 LOGGING_DIC = {
-    'version': 1.0,
-    'disable_existing_loggers': False,
-    'formatters': {
-        'standard': {
-            'format':
-                '%(asctime)s %(threadName)s:%(thread)d [%(name)s] %(levelname)s [%(pathname)s:%(lineno)d] %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
+    "version": 1.0,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "standard": {
+            "format": "%(asctime)s %(threadName)s:%(thread)d [%(name)s] %(levelname)s [%(pathname)s:%(lineno)d] %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
-        'simple': {
-            'format': '%(asctime)s [%(name)s] %(levelname)s %(message)s',
-            'datefmt': '%Y-%m-%d %H:%M:%S',
+        "simple": {
+            "format": "%(asctime)s [%(name)s] %(levelname)s %(message)s",
+            "datefmt": "%Y-%m-%d %H:%M:%S",
         },
-        'test': {
-            'format': '%(asctime)s %(message)s',
-        },
-    },
-    'filters': {},
-    'handlers': {
-        'console_debug_handler': {
-            'level': 'DEBUG',  # 日志处理的级别限制
-            'class': 'logging.StreamHandler',  # 输出到终端
-            'formatter': 'simple'  # 日志格式
-        },
-        'file_info_handler': {
-            'level': 'INFO',
-            'class': 'logging.handlers.RotatingFileHandler',  # 保存到文件,日志轮转
-            'filename': 'user.log',
-            'maxBytes': 1024 * 1024 * 10,  # 日志大小 10M
-            'backupCount': 10,  # 日志文件保存数量限制
-            'encoding': 'utf-8',
-            'formatter': 'standard',
-        },
-        'file_debug_handler': {
-            'level': 'DEBUG',
-            'class': 'logging.FileHandler',  # 保存到文件
-            'filename': 'test.log',  # 日志存放的路径
-            'encoding': 'utf-8',  # 日志文件的编码
-            'formatter': 'test',
+        "test": {
+            "format": "%(asctime)s %(message)s",
         },
     },
-    'loggers': {
-        'logger1': {  # 导入时logging.getLogger时使用的app_name
-            'handlers': ['console_debug_handler'],  # 日志分配到哪个handlers中
-            'level': 'DEBUG',
-            'propagate': False,
+    "filters": {},
+    "handlers": {
+        "console_debug_handler": {
+            "level": "DEBUG",  # 日志处理的级别限制
+            "class": "logging.StreamHandler",  # 输出到终端
+            "formatter": "simple",  # 日志格式
         },
-        'logger2': {
-            'handlers': ['console_debug_handler', 'file_debug_handler'],
-            'level': 'INFO',
-            'propagate': False,
+        "file_info_handler": {
+            "level": "INFO",
+            "class": "logging.handlers.RotatingFileHandler",  # 保存到文件,日志轮转
+            "filename": "user.log",
+            "maxBytes": 1024 * 1024 * 10,  # 日志大小 10M
+            "backupCount": 10,  # 日志文件保存数量限制
+            "encoding": "utf-8",
+            "formatter": "standard",
         },
-    }
+        "file_debug_handler": {
+            "level": "DEBUG",
+            "class": "logging.FileHandler",  # 保存到文件
+            "filename": "test.log",  # 日志存放的路径
+            "encoding": "utf-8",  # 日志文件的编码
+            "formatter": "test",
+        },
+    },
+    "loggers": {
+        "logger1": {  # 导入时logging.getLogger时使用的app_name
+            "handlers": ["console_debug_handler"],  # 日志分配到哪个handlers中
+            "level": "DEBUG",
+            "propagate": False,
+        },
+        "logger2": {
+            "handlers": ["console_debug_handler", "file_debug_handler"],
+            "level": "INFO",
+            "propagate": False,
+        },
+    },
 }
 
 
-
-
-
-
-def get_logger(name, path='results/loggers'):
+def get_logger(name, path="results/loggers"):
     """
     get the logger
     :param name: name of logger file
@@ -96,9 +101,9 @@ def get_logger(name, path='results/loggers'):
     log_config = copy.deepcopy(LOGGING_DIC)
     if not os.path.exists(path):
         os.makedirs(path)
-    log_config['handlers']['file_debug_handler']['filename'] = os.path.join(path, name)
+    log_config["handlers"]["file_debug_handler"]["filename"] = os.path.join(path, name)
     logging.config.dictConfig(log_config)
-    logger = logging.getLogger('logger2')
+    logger = logging.getLogger("logger2")
     return logger
 
 
@@ -121,17 +126,28 @@ def seed_it(seed):
     torch.manual_seed(seed)
 
 
-
-def log_metrics(epoch_loss, predicted_scores, target_scores, task_type, phase, epoch, writer, logger, multi_label=True):
+def log_metrics(
+    epoch_loss,
+    predicted_scores,
+    target_scores,
+    task_type,
+    phase,
+    epoch,
+    writer,
+    logger,
+    multi_label=True,
+):
     if task_type == "regression":
-        rmse = evaluate_mat(predicted_scores, target_scores, method='RMSE')
-        mae = evaluate_mat(predicted_scores, target_scores, method='MAE')
-        log_or_print('{} loss={} RMSE={} MAE={}'.format(phase, epoch_loss, rmse, mae), logger)
+        rmse = evaluate_mat(predicted_scores, target_scores, method="RMSE")
+        mae = evaluate_mat(predicted_scores, target_scores, method="MAE")
+        log_or_print(
+            "{} loss={} RMSE={} MAE={}".format(phase, epoch_loss, rmse, mae), logger
+        )
         if writer:
-            writer.add_scalar('Loss/' + phase, epoch_loss, epoch)
+            writer.add_scalar("Loss/" + phase, epoch_loss, epoch)
             for idx, (r, m) in enumerate(zip(rmse, mae)):
-                writer.add_scalar('Metrics/RMSE_{}_{}'.format(idx, phase), r, epoch)
-                writer.add_scalar('Metrics/MAE_{}_{}'.format(idx, phase), m, epoch)
+                writer.add_scalar("Metrics/RMSE_{}_{}".format(idx, phase), r, epoch)
+                writer.add_scalar("Metrics/MAE_{}_{}".format(idx, phase), m, epoch)
     elif task_type == "classification":
         # Convert predicted scores to class label
         predicted_scores = np.concatenate(predicted_scores, axis=0)
@@ -139,20 +155,31 @@ def log_metrics(epoch_loss, predicted_scores, target_scores, task_type, phase, e
         threshold = 0.5
 
         n_classes = predicted_scores.shape[1]
-        if n_classes <=2:
-            accuracy = accuracy_score(target_scores, (predicted_scores > threshold).astype(float))
-            recall = recall_score(target_scores, (predicted_scores > threshold).astype(float))
-            precision = precision_score(target_scores, (predicted_scores > threshold).astype(float))
+        if n_classes <= 2:
+            accuracy = accuracy_score(
+                target_scores, (predicted_scores > threshold).astype(float)
+            )
+            recall = recall_score(
+                target_scores, (predicted_scores > threshold).astype(float)
+            )
+            precision = precision_score(
+                target_scores, (predicted_scores > threshold).astype(float)
+            )
             f1 = f1_score(target_scores, (predicted_scores > threshold).astype(float))
             auc = roc_auc_score(target_scores, predicted_scores)
-            log_or_print('{} Loss: {:.4f}, Accuracy: {:.2f}%, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}'.format(phase, epoch_loss, accuracy, recall, precision, f1, auc), logger)
+            log_or_print(
+                "{} Loss: {:.4f}, Accuracy: {:.2f}%, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}".format(
+                    phase, epoch_loss, accuracy, recall, precision, f1, auc
+                ),
+                logger,
+            )
             if writer:
-                writer.add_scalar('Loss/' + phase, epoch_loss, epoch)
-                writer.add_scalar('Metrics/Accuracy_' + phase, accuracy, epoch)
-                writer.add_scalar('Metrics/Recall_' + phase, recall, epoch)
-                writer.add_scalar('Metrics/Precision_' + phase, precision, epoch)
-                writer.add_scalar('Metrics/F1_' + phase, f1, epoch)
-                writer.add_scalar('Metrics/AUC_' + phase, auc, epoch)
+                writer.add_scalar("Loss/" + phase, epoch_loss, epoch)
+                writer.add_scalar("Metrics/Accuracy_" + phase, accuracy, epoch)
+                writer.add_scalar("Metrics/Recall_" + phase, recall, epoch)
+                writer.add_scalar("Metrics/Precision_" + phase, precision, epoch)
+                writer.add_scalar("Metrics/F1_" + phase, f1, epoch)
+                writer.add_scalar("Metrics/AUC_" + phase, auc, epoch)
         else:
             # calculate the tpr, tnr, fpr, fnr for each class
             accuracy_all = []
@@ -161,19 +188,56 @@ def log_metrics(epoch_loss, predicted_scores, target_scores, task_type, phase, e
             f1_all = []
             auc_all = []
             for i in range(predicted_scores.shape[1]):
-                accuracy_all.append(accuracy_score(target_scores[:, i], (predicted_scores[:, i] > threshold).astype(float)))
-                recall_all.append(recall_score(target_scores[:, i], (predicted_scores[:, i] > threshold).astype(float)))
-                precision_all.append(precision_score(target_scores[:, i], (predicted_scores[:, i] > threshold).astype(float)))
-                f1_all.append(f1_score(target_scores[:, i], (predicted_scores[:, i] > threshold).astype(float)))
-                auc_all.append(roc_auc_score(target_scores[:, i], predicted_scores[:, i]))
-                log_or_print('{} Loss: {:.4f}, Accuracy: {:.2f}%, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}'.format(phase, epoch_loss, accuracy_all[i], recall_all[i], precision_all[i], f1_all[i], auc_all[i]), logger)
+                accuracy_all.append(
+                    accuracy_score(
+                        target_scores[:, i],
+                        (predicted_scores[:, i] > threshold).astype(float),
+                    )
+                )
+                recall_all.append(
+                    recall_score(
+                        target_scores[:, i],
+                        (predicted_scores[:, i] > threshold).astype(float),
+                    )
+                )
+                precision_all.append(
+                    precision_score(
+                        target_scores[:, i],
+                        (predicted_scores[:, i] > threshold).astype(float),
+                    )
+                )
+                f1_all.append(
+                    f1_score(
+                        target_scores[:, i],
+                        (predicted_scores[:, i] > threshold).astype(float),
+                    )
+                )
+                auc_all.append(
+                    roc_auc_score(target_scores[:, i], predicted_scores[:, i])
+                )
+                log_or_print(
+                    "{} Loss: {:.4f}, Accuracy: {:.2f}%, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}".format(
+                        phase,
+                        epoch_loss,
+                        accuracy_all[i],
+                        recall_all[i],
+                        precision_all[i],
+                        f1_all[i],
+                        auc_all[i],
+                    ),
+                    logger,
+                )
             accuracy = np.mean(accuracy_all)
             recall = np.mean(recall_all)
             precision = np.mean(precision_all)
             f1 = np.mean(f1_all)
             auc = np.mean(auc_all)
-            log_or_print('{} Loss: {:.4f}, Accuracy_Average: {:.2f}%, Recall_Average: {:.4f}, Precision_Average: {:.4f}, F1_Average: {:.4f}, AUC_average: {:.4f}'.format(phase, epoch_loss, accuracy, recall, precision, f1, auc), logger)
-
+            log_or_print(
+                "{} Loss: {:.4f}, Accuracy_Average: {:.2f}%, Recall_Average: {:.4f}, Precision_Average: {:.4f}, F1_Average: {:.4f}, AUC_average: {:.4f}".format(
+                    phase, epoch_loss, accuracy, recall, precision, f1, auc
+                ),
+                logger,
+            )
 
 
 def evaluate_mat(predicted, target, method):
@@ -201,13 +265,19 @@ def evaluate_mat(predicted, target, method):
         """
         if isinstance(data, list):
             # Ensure all elements are torch tensors before concatenation
-            data = [torch.tensor(d).to(dtype=torch.float32, device='cuda') if isinstance(d, np.ndarray) else d.to(
-                dtype=torch.float32, device='cuda') for d in data]
+            data = [
+                (
+                    torch.tensor(d).to(dtype=torch.float32, device="cuda")
+                    if isinstance(d, np.ndarray)
+                    else d.to(dtype=torch.float32, device="cuda")
+                )
+                for d in data
+            ]
             data = torch.cat(data, dim=0)
         elif isinstance(data, np.ndarray):
-            data = torch.tensor(data).to(dtype=torch.float32, device='cuda')
+            data = torch.tensor(data).to(dtype=torch.float32, device="cuda")
         # Ensure the resulting tensor is on the right device and dtype
-        return data.to(dtype=torch.float32, device='cuda')
+        return data.to(dtype=torch.float32, device="cuda")
 
     # Convert lists of tensors to single tensors if needed
     predicted = to_single_tensor(predicted)
@@ -216,12 +286,12 @@ def evaluate_mat(predicted, target, method):
     # Calculate the difference between the predicted and target scores.
     res = predicted - target
 
-    if method == 'RMSE':
-        res = res ** 2
+    if method == "RMSE":
+        res = res**2
         # Assuming res is a PyTorch tensor for efficient computation
         res = torch.sqrt(torch.sum(res, dim=0) / res.shape[0]).cpu().numpy()
 
-    elif method == 'MAE':
+    elif method == "MAE":
         # Assuming res is a PyTorch tensor for efficient computation
         res = (torch.sum(torch.abs(res), dim=0) / res.shape[0]).cpu().numpy()
 
@@ -238,7 +308,7 @@ def log_or_print(message, logger):
         print(message)
 
 
-class EarlyStopping():
+class EarlyStopping:
     def __init__(self, tolerance=5, min_delta=0):
 
         self.tolerance = tolerance
@@ -255,6 +325,51 @@ class EarlyStopping():
         else:
             self.counter = 0
 
+
+def undersample_dataset(train_set, target_attr="y", random_state=42):
+    """
+    Args: train_set: torch_geometric, target_attr, random_state
+    Returns: train_set
+    """
+    # Get all labels
+    all_labels = []
+    for data in train_set:
+        all_labels.append(data[target_attr].item())
+    all_labels = np.array(all_labels)
+
+    # Count class frequencies
+    unique_labels, counts = np.unique(all_labels, return_counts=True)
+    min_count = counts.min()
+
+    # Get indices for each class
+    balanced_indices = []
+    for label in unique_labels:
+        label_indices = np.where(all_labels == label)[0]
+        # Undersample to the size of the smallest class
+        undersampled_indices = resample(
+            label_indices, replace=False, n_samples=min_count, random_state=random_state
+        )
+        balanced_indices.extend(undersampled_indices)
+
+    undersampled_dataset = [train_set[i] for i in balanced_indices]
+
+    if isinstance(train_set, Dataset):
+        # If it's a custom Dataset subclass, you might need to create a new one
+        # This is a simplified approach - you may need to adjust based on your specific dataset class
+        from torch_geometric.data import Dataset as PyGDataset
+
+        class UndersampledDataset(PyGDataset):
+            def __init__(self, dataset_list):
+                super(UndersampledDataset, self).__init__()
+                self.data_list = dataset_list
+
+            def len(self):
+                return len(self.data_list)
+
+            def get(self, idx):
+                return self.data_list[idx]
+
+        return UndersampledDataset(undersampled_dataset)
 
 
 def weighted_sample(dataset, sample_type):

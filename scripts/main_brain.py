@@ -20,20 +20,30 @@ import time
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.tensorboard import SummaryWriter
 import utils.utils as utils
-from train.train import train_epoch, evaluate_network, train_epoch_anomaly_detection, evaluate_network_anomaly_detection
-from datasets.Brain_dataset import Brain
-from torch_geometric.loader import DataLoader
-from skmultilearn.model_selection.iterative_stratification import IterativeStratification
+from train.train import (
+    train_epoch,
+    evaluate_network,
+    train_epoch_anomaly_detection,
+    evaluate_network_anomaly_detection,
+)
 import sys
+
+sys.path.append(os.path.dirname((os.path.abspath(__file__))))
+sys.path.append(os.path.dirname(os.path.dirname((os.path.abspath(__file__)))))
 import pdb
+
+from scripts.datasets.Brain_dataset import Brain
+from torch_geometric.loader import DataLoader
+from skmultilearn.model_selection.iterative_stratification import (
+    IterativeStratification,
+)
+
+from imblearn.under_sampling import RandomUnderSampler
+
 import wandb
 import numpy as np
 from sklearn.metrics import roc_auc_score
 import torch.nn as nn
-
-
-sys.path.append(os.path.dirname((os.path.abspath(__file__))))
-
 
 
 def main(args):
@@ -49,7 +59,7 @@ def main(args):
     with open(config_file) as f:
         config = json.load(f)
     # combine the config and args
-    
+
     config["dataset"] = args.dataset
     if args.dropout:
         config["net_params"]["dropout"] = args.dropout
@@ -57,10 +67,11 @@ def main(args):
         args.x_attributes = ["FC", "SC"]
 
     # log the config and args information
-    wandb.init(project="brain", name=f"posw{args.if_pos_weight}_mod{args.modality}_lr{args.lr}")
+    wandb.init(
+        project="brain", name=f"posw{args.if_pos_weight}_mod{args.modality}_lr{args.lr}"
+    )
     wandb.config.update(args)
     wandb.config.update(config)
-
 
     save_name = (
         now
@@ -104,23 +115,19 @@ def main(args):
     # split datasets
     train_test_split = 0.6
     test_val_split = 0.8
-    train_set, val_set, test_set = dataset[:int(train_test_split * len(dataset))], dataset[int(train_test_split * len(dataset)):int(test_val_split * len(dataset))], dataset[int(test_val_split * len(dataset)):]
+    train_set, val_set, test_set = (
+        dataset[: int(train_test_split * len(dataset))],
+        dataset[
+            int(train_test_split * len(dataset)) : int(test_val_split * len(dataset))
+        ],
+        dataset[int(test_val_split * len(dataset)) :],
+    )
+    train_set = utils.undersample_dataset(train_set)
     # Prepare the dataloaders
     train_dataloader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
     val_dataloader = DataLoader(val_set, batch_size=64, shuffle=False)
     test_dataloader = DataLoader(test_set, batch_size=64, shuffle=False)
     logger.info("#" * 60)
-
-    # dataset = Brain()
-    # train_indices = torch.randperm(len(dataset))[:int(0.8 * len(dataset))]
-    # test_indices = 
-    # pdb.set_trace()
-    # train_dataset = dataset[train_indices]
-    # test_dataset = dataset[test_indices]
-    # train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
-    # test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False)
-    # val_dataloader = 
-
 
     # Define the model
     model = load_model(config, args)
@@ -129,10 +136,11 @@ def main(args):
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
 
     # Training preparation
-    scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=10)
+    scheduler = lr_scheduler.ReduceLROnPlateau(
+        optimizer, mode="min", factor=0.5, patience=10
+    )
     min_test_loss = 1e12
     early_stopping = utils.EarlyStopping(tolerance=10, min_delta=0)
-
 
     criterion = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
@@ -150,7 +158,7 @@ def main(args):
             writer=writer,
             weight_score=args.weight_score,
             args=args,
-        )  
+        )
         epoch_loss_val = evaluate_network(
             model,
             device,
@@ -189,7 +197,7 @@ def main(args):
         )
 
         # scheduler.step(epoch_loss_train)
-        
+
         # save the best model
         epoch_loss_test = epoch_loss_train
         if epoch_loss_test < min_test_loss:
@@ -221,7 +229,7 @@ if __name__ == "__main__":
     parser.add_argument("--dropout", default=0.1, help="dropout rate")
     parser.add_argument("--seed", default=42, type=int, help="random seed")
     parser.add_argument(
-        "--config", default="MLP_classification", help="config file name"
+        "--config", default="GIN_classification", help="config file name"
     )
     parser.add_argument(
         "--task",
@@ -239,16 +247,29 @@ if __name__ == "__main__":
         "--attributes_group", default=["Age in year"], help="attributes to group"
     )
     parser.add_argument(
-        "--train_val_test", default=[0.7, 0.1, 0.2], help="train, val, test split"
+        "--train_val_test", default=[0.6, 0.2, 0.2], help="train, val, test split"
     )
     parser.add_argument("--dataset", default="dglHCP", help="dataset name")
     parser.add_argument("--sparse", default=30, type=int, help="sparsity for knn graph")
     parser.add_argument("--gl", default=False, help="graph learning beta")
     parser.add_argument("--weight_score", default=[0.5, 0.5], help="weight score")
-    parser.add_argument("--if_pos_weight", default="False", help="if pos weight", type=str)
-    parser.add_argument("--modality", default="FC", help="modality", type=str, choices=["FC", "SC", "Both"])
+    parser.add_argument(
+        "--if_pos_weight", default="False", help="if pos weight", type=str
+    )
+    parser.add_argument(
+        "--modality",
+        default="FC",
+        help="modality",
+        type=str,
+        choices=["FC", "SC", "Both"],
+    )
     parser.add_argument("--task_idx", default=0, help="pretrain", type=int)
-    parser.add_argument("--loss_type", default="weighted_bce", help="loss type", choices=["bce", "focal", "weighted_bce"])
+    parser.add_argument(
+        "--loss_type",
+        default="focal",
+        help="loss type",
+        choices=["bce", "focal", "weighted_bce"],
+    )
     parser.add_argument("--focal_gamma", default=2, help="focal gamma")
 
     args = parser.parse_args()
