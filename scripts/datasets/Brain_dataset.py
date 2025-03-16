@@ -7,6 +7,7 @@ import os
 import torch
 from torch.utils.data import Dataset
 from torch_geometric.data import InMemoryDataset, Data
+
 # global mean pooling and global max pooling
 from torch_geometric.nn import global_mean_pool, global_max_pool
 from torch_sparse import SparseTensor
@@ -38,13 +39,13 @@ DATA_PATH = os.path.abspath("./dataset/processed/SC_FC_att.pkl")
 def pre_transform(data: Dict[str, Any]) -> Data:
     """Transform the data into torch Data type"""
     if DATA_PATH == os.path.abspath("./dataset/all_graphs_2.pkl"):
-        x = data['adj']
+        x = data["adj"]
         adj = torch.tensor(data["adj"], dtype=torch.float32)
         adj = (adj - adj.min()) / (adj.max() - adj.min())
         edge_index_ = (adj >= -1).nonzero().t().contiguous()
         edge_index_ = edge_index_[:, edge_index_[0] != edge_index_[1]]
         edge_weight = adj[edge_index_[0], edge_index_[1]]
-        label = data['y'].unsqueeze(0)
+        label = data["y"].unsqueeze(0)
         return Data(
             x=x,
             x_SC=None,
@@ -52,26 +53,40 @@ def pre_transform(data: Dict[str, Any]) -> Data:
             edge_weight=edge_weight,
             edge_index_SC=None,
             edge_weight_SC=None,
-            y=label
+            y=label,
         )
     else:
         x = torch.tensor(data["FC"], dtype=torch.float32)
         x_SC = torch.tensor(data["SC"], dtype=torch.float32)
-        x_SC = (x_SC.max() - x_SC) / (x_SC.max() - x_SC.min())
+        x_SC = (
+            (x_SC - x_SC.min()) / (x_SC.max() - x_SC.min()) * 1e3
+        )  # only standardize SC
 
-        edge_index_FC = (x >= -1).nonzero().t().contiguous()
+        # x_flatten = x.flatten()
+        # x_flatten = sorted(x_flatten, reverse=True)
+        # k = int(len(x_flatten) * 0.1)
+        # threshold = x_flatten[k]
+
+        # x_SC_flatten = x_SC.flatten()
+        # x_SC_flatten = sorted(x_SC_flatten, reverse=True)
+        # k = int(len(x_SC_flatten) * 0.1)
+        # threshold_SC = x_SC_flatten[k]
+
+        edge_index_FC = (x >= 0.6).nonzero().t().contiguous()
         edge_index_FC = edge_index_FC[:, edge_index_FC[0] != edge_index_FC[1]]
         row, col = edge_index_FC
         edge_weight_FC = x[row, col]
-
-        edge_index_SC =  (x_SC > x_SC.mean()).nonzero().t().contiguous()
+        edge_index_SC = (x_SC >= 7).nonzero().t().contiguous()
         edge_index_SC = edge_index_SC[:, edge_index_SC[0] != edge_index_SC[1]]
         row, col = edge_index_SC
         edge_weight_SC = torch.tensor(x_SC[row, col], dtype=torch.float32)
 
-        feature = torch.tensor(data['feature'], dtype=torch.float32).unsqueeze(0) if 'feature' in data.keys() else None
-        label_tensor = torch.tensor(data['label'], dtype=torch.float32).unsqueeze(0)
-
+        feature = (
+            torch.tensor(data["feature"], dtype=torch.float32).unsqueeze(0)
+            if "feature" in data.keys()
+            else None
+        )
+        label_tensor = torch.tensor(data["label"], dtype=torch.float32).unsqueeze(0)
 
         return Data(
             x=x,
@@ -81,7 +96,7 @@ def pre_transform(data: Dict[str, Any]) -> Data:
             edge_index_SC=edge_index_SC,
             edge_weight_SC=edge_weight_SC,
             y=label_tensor,
-            feature=feature
+            feature=feature,
         )
 
 
@@ -95,7 +110,7 @@ class Brain(InMemoryDataset):
         suffix=None,
         args=None,
     ):
-        
+
         if suffix is None:
             suffix = ""
         self.processed_path = os.path.join(processed_path, f"{task}_data{suffix}.pt")
@@ -111,9 +126,8 @@ class Brain(InMemoryDataset):
         self.data, self.slices = torch.load(self.processed_path)
 
         """modify"""
-        self.data.y = self.data['y'].unsqueeze(1)
+        self.data.y = self.data["y"].unsqueeze(1)
         """modify end"""
-
 
     def processed_file_names(self):
         return os.path.basename(self.processed_path)
@@ -146,15 +160,21 @@ class Brain(InMemoryDataset):
         data, slices = self.collate(data_list)
         print("Saving...")
         torch.save((data, slices), self.processed_path)
-        
-
 
 
 if __name__ == "__main__":
 
-    dataset = Brain(task='classification', x_attributes=['adj'], processed_path='/project/uvadm/zhenyu/project/brain/data/processed', rawdata_path='/project/uvadm/zhenyu/project/brain/dataset/all_graphs_2.pkl')
+    dataset = Brain(
+        task="classification",
+        x_attributes=["adj"],
+        processed_path="/project/uvadm/zhenyu/project/brain/data/processed",
+        rawdata_path="/project/uvadm/zhenyu/project/brain/dataset/all_graphs_2.pkl",
+    )
     train_test_split = 0.8
-    train_dataset, test_dataset = dataset[:int(train_test_split * len(dataset))], dataset[int(train_test_split * len(dataset)):]
+    train_dataset, test_dataset = (
+        dataset[: int(train_test_split * len(dataset))],
+        dataset[int(train_test_split * len(dataset)) :],
+    )
     pdb.set_trace()
     train_dataloader = DataLoader(train_dataset, batch_size=32, shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=32, shuffle=False)
@@ -176,17 +196,26 @@ if __name__ == "__main__":
             x = global_mean_pool(x, data.batch)
 
             x = self.fc(x)
-            
+
             return x
 
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    from torch_geometric.nn import GINConv, global_mean_pool, global_max_pool, GCNConv, SAGEConv, GATConv, GatedGraphConv, SGConv, ResGatedGraphConv 
+    from torch_geometric.nn import (
+        GINConv,
+        global_mean_pool,
+        global_max_pool,
+        GCNConv,
+        SAGEConv,
+        GATConv,
+        GatedGraphConv,
+        SGConv,
+        ResGatedGraphConv,
+    )
 
     import pdb
     from torch_geometric.nn import TransformerConv
-
 
     net_params = {
         "in_channels": 379,
@@ -194,7 +223,7 @@ if __name__ == "__main__":
         "out_channels": 1,
         "num_layers": 2,
         "dropout": 0.5,
-        "readout": "mean"
+        "readout": "mean",
     }
 
     class GIN_pyg(nn.Module):
@@ -216,12 +245,15 @@ if __name__ == "__main__":
             self.conv1 = GCNConv(self.in_channels, self.hidden_channels)
             self.conv2 = GCNConv(self.hidden_channels, self.hidden_channels)
             self.fc = nn.Linear(self.hidden_channels, 1)
-            
-            
 
         def forward(self, data):
-            x, edge_index, edge_weight, batch = data.x , data.edge_index, data.edge_weight.unsqueeze(-1), data.batch
-            x = F.relu(self.conv1(x, edge_index, edge_weight)) 
+            x, edge_index, edge_weight, batch = (
+                data.x,
+                data.edge_index,
+                data.edge_weight.unsqueeze(-1),
+                data.batch,
+            )
+            x = F.relu(self.conv1(x, edge_index, edge_weight))
             x = F.dropout(x, p=self.dropout, training=self.training)
             x = F.relu(self.conv2(x, edge_index, edge_weight))
             x = F.dropout(x, p=self.dropout, training=self.training)
@@ -230,12 +262,9 @@ if __name__ == "__main__":
 
             return predict
 
-
-
     model = GCN()
     criterion = nn.BCEWithLogitsLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
-
 
     for epoch in range(200):
         for i, data in enumerate(train_dataloader):
@@ -244,7 +273,7 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
-            print(f'Epoch {epoch}, iter {i}, loss: {loss.item()}')
+            print(f"Epoch {epoch}, iter {i}, loss: {loss.item()}")
 
         correct = 0
         total = 0
@@ -261,4 +290,4 @@ if __name__ == "__main__":
         # print()
         # acc = accuracy_score(y_true, y_preds)
         auc = roc_auc_score(y_true, y_preds)
-        print(f'Epoch {epoch},auc: {auc}')
+        print(f"Epoch {epoch},auc: {auc}")
