@@ -32,72 +32,7 @@ from typing import Any, Dict, List, Tuple
 # set the path to the root directory of the project
 sys.path.append(os.path.abspath("../"))
 
-# DATA_PATH = os.path.abspath("./dataset/all_graphs_2.pkl")
-DATA_PATH = os.path.abspath("./dataset/processed/SC_FC_att.pkl")
 
-
-def pre_transform(data: Dict[str, Any]) -> Data:
-    """Transform the data into torch Data type"""
-    if DATA_PATH == os.path.abspath("./dataset/all_graphs_2.pkl"):
-        x = data["adj"]
-        adj = torch.tensor(data["adj"], dtype=torch.float32)
-        adj = (adj - adj.min()) / (adj.max() - adj.min())
-        edge_index_ = (adj >= -1).nonzero().t().contiguous()
-        edge_index_ = edge_index_[:, edge_index_[0] != edge_index_[1]]
-        edge_weight = adj[edge_index_[0], edge_index_[1]]
-        label = data["y"].unsqueeze(0)
-        return Data(
-            x=x,
-            x_SC=None,
-            edge_index=edge_index_,
-            edge_weight=edge_weight,
-            edge_index_SC=None,
-            edge_weight_SC=None,
-            y=label,
-        )
-    else:
-        x = torch.tensor(data["FC"], dtype=torch.float32)
-        x_SC = torch.tensor(data["SC"], dtype=torch.float32)
-        x_SC = (
-            (x_SC - x_SC.min()) / (x_SC.max() - x_SC.min()) * 1e3
-        )  # only standardize SC
-
-        # x_flatten = x.flatten()
-        # x_flatten = sorted(x_flatten, reverse=True)
-        # k = int(len(x_flatten) * 0.1)
-        # threshold = x_flatten[k]
-
-        # x_SC_flatten = x_SC.flatten()
-        # x_SC_flatten = sorted(x_SC_flatten, reverse=True)
-        # k = int(len(x_SC_flatten) * 0.1)
-        # threshold_SC = x_SC_flatten[k]
-
-        edge_index_FC = (x >= 0.6).nonzero().t().contiguous()
-        edge_index_FC = edge_index_FC[:, edge_index_FC[0] != edge_index_FC[1]]
-        row, col = edge_index_FC
-        edge_weight_FC = x[row, col]
-        edge_index_SC = (x_SC >= 7).nonzero().t().contiguous()
-        edge_index_SC = edge_index_SC[:, edge_index_SC[0] != edge_index_SC[1]]
-        row, col = edge_index_SC
-        edge_weight_SC = torch.tensor(x_SC[row, col], dtype=torch.float32)
-
-        feature = (
-            torch.tensor(data["feature"], dtype=torch.float32).unsqueeze(0)
-            if "feature" in data.keys()
-            else None
-        )
-        label_tensor = torch.tensor(data["label"], dtype=torch.float32).unsqueeze(0)
-
-        return Data(
-            x=x,
-            x_SC=x_SC,
-            edge_index=edge_index_FC,
-            edge_weight=edge_weight_FC,
-            edge_index_SC=edge_index_SC,
-            edge_weight_SC=edge_weight_SC,
-            y=label_tensor,
-            feature=feature,
-        )
 
 
 class Brain(InMemoryDataset):
@@ -106,28 +41,66 @@ class Brain(InMemoryDataset):
         task,
         x_attributes=None,
         processed_path="./data/processed",
-        rawdata_path=DATA_PATH,
+        rawdata_path=None,
         suffix=None,
         args=None,
     ):
 
         if suffix is None:
-            suffix = ""
-        self.processed_path = os.path.join(processed_path, f"{task}_data{suffix}.pt")
+            suffix = f"{args.data_name}" if args and hasattr(args, "data_name") else ""
+        self.processed_path = os.path.join(processed_path, f"{suffix}.pt")
 
         self.task = task
         self.x_attributes = x_attributes
         self.rawdata_path = rawdata_path
         self.suffix = suffix
-        self.pre_transform = pre_transform
 
-        super().__init__(pre_transform=self.pre_transform)
+        super().__init__(pre_transform=self.make_pre_transform(args))
 
         self.data, self.slices = torch.load(self.processed_path)
 
         """modify"""
-        self.data.y = self.data["y"].unsqueeze(1)
+        if args is not None and hasattr(args, "label_index") and args.label_index is not None and len(self.data['y'].shape) > 1 and self.data["y"].shape[1] > 1:
+            self.data.y = self.data["y"][:, [args.label_index]] 
+        else:
+            self.data.y = self.data["y"].unsqueeze(1) 
         """modify end"""
+    
+    def make_pre_transform(self, args):
+        def transform(data: Dict[str, Any]) -> Data:
+            x = torch.tensor(data["FC"], dtype=torch.float32)
+            x_SC = torch.tensor(data["SC"], dtype=torch.float32)
+            x_SC = ((x_SC - x_SC.min()) / (x_SC.max() - x_SC.min()) * 1e5).log1p()
+
+            threshold = args.threshold if args and hasattr(args, "threshold") else 0
+            edge_index_FC = (x > threshold).nonzero().t().contiguous()
+            edge_index_FC = edge_index_FC[:, edge_index_FC[0] != edge_index_FC[1]]
+            row, col = edge_index_FC
+            edge_weight_FC = x[row, col]
+
+            edge_index_SC = (x_SC >= 7).nonzero().t().contiguous()
+            edge_index_SC = edge_index_SC[:, edge_index_SC[0] != edge_index_SC[1]]
+            row, col = edge_index_SC
+            edge_weight_SC = torch.tensor(x_SC[row, col], dtype=torch.float32)
+
+            feature = (
+                torch.tensor(data["feature"], dtype=torch.float32).unsqueeze(0)
+                if "feature" in data.keys()
+                else None
+            )
+            label_tensor = torch.tensor(data["label"], dtype=torch.float32).unsqueeze(0)
+
+            return Data(
+                x=x,
+                x_SC=x_SC,
+                edge_index=edge_index_FC,
+                edge_weight=edge_weight_FC,
+                edge_index_SC=edge_index_SC,
+                edge_weight_SC=edge_weight_SC,
+                y=label_tensor,
+                feature=feature,
+            )
+        return transform
 
     def processed_file_names(self):
         return os.path.basename(self.processed_path)

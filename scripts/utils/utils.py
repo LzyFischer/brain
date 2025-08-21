@@ -13,7 +13,7 @@ from sklearn.metrics.pairwise import euclidean_distances
 from scipy import sparse as sp
 import dgl
 import torch.nn.functional as F
-from models.model_loss import weighted_mse_loss, classification_loss
+from models.model_loss import classification_loss
 from sklearn.metrics import roc_curve, auc, roc_auc_score, recall_score, precision_score
 from sklearn.preprocessing import label_binarize
 from sklearn.metrics import (
@@ -23,11 +23,15 @@ from sklearn.metrics import (
     accuracy_score,
     f1_score,
 )
+from sklearn.utils import resample
+from torch_geometric.data import Dataset as PyGDataset
 import pdb
 from sklearn.manifold import SpectralEmbedding
 
 from torch_geometric.data import Dataset
 from sklearn.utils import resample
+from matplotlib.colors import ListedColormap
+from matplotlib import colors
 
 # surpress warnings UndefinedMetricWarning
 import warnings
@@ -148,6 +152,7 @@ def log_metrics(
             for idx, (r, m) in enumerate(zip(rmse, mae)):
                 writer.add_scalar("Metrics/RMSE_{}_{}".format(idx, phase), r, epoch)
                 writer.add_scalar("Metrics/MAE_{}_{}".format(idx, phase), m, epoch)
+
     elif task_type == "classification":
         # Convert predicted scores to class label
         predicted_scores = np.concatenate(predicted_scores, axis=0)
@@ -155,89 +160,107 @@ def log_metrics(
         threshold = 0.5
 
         n_classes = predicted_scores.shape[1]
+
+    if n_classes <= 2:  # Binary classification
+        mask = (target_scores != -1).astype(bool)  # Create mask
+        target_masked = target_scores[mask]
+        predicted_masked = predicted_scores[mask]
+
+        if target_masked.size == 0: #Handle case where all targets are masked.
+          log_or_print(f"{phase} Loss: {epoch_loss:.4f}, All targets masked", logger)
+          if writer:
+            writer.add_scalar("Loss/" + phase, epoch_loss, epoch)
+          return
+
+        accuracy = accuracy_score(target_masked, (predicted_masked > threshold).astype(float))
+        recall = recall_score(target_masked, (predicted_masked > threshold).astype(float))
+        precision = precision_score(target_masked, (predicted_masked > threshold).astype(float))
+        f1 = f1_score(target_masked, (predicted_masked > threshold).astype(float))
+        try:
+            auc = roc_auc_score(target_masked, predicted_masked)
+        except ValueError:
+            auc = 0.0
+
+        log_or_print(
+            "{} Loss: {:.4f}, Accuracy: {:.2f}%, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}".format(
+                phase, epoch_loss, accuracy, recall, precision, f1, auc
+            ),
+            logger,
+        )
+
+    else:  # Multi-label classification
+        accuracy_all = []
+        recall_all = []
+        precision_all = []
+        f1_all = []
+        auc_all = []
+        if target_scores.squeeze().ndim == 1:
+            target_scores = label_binarize(target_scores, classes=np.arange(n_classes))
+
+        for i in range(n_classes):
+            mask = (target_scores[:, i] != -1).astype(bool)  # Create mask for each label
+            target_masked = target_scores[mask, i]
+            predicted_masked = predicted_scores[mask, i]
+
+            if target_masked.size == 0: #Handle case where all targets are masked.
+              log_or_print(f"{phase} Loss: {epoch_loss:.4f}, Class {i}, All targets masked", logger)
+              continue
+
+            accuracy_all.append(accuracy_score(target_masked, (predicted_masked > threshold).astype(float)))
+            recall_all.append(recall_score(target_masked, (predicted_masked > threshold).astype(float)))
+            precision_all.append(precision_score(target_masked, (predicted_masked > threshold).astype(float)))
+            f1_all.append(f1_score(target_masked, (predicted_masked > threshold).astype(float)))
+            auc_all.append(roc_auc_score(target_masked, predicted_masked))
+
+            log_or_print(
+                "{} Loss: {:.4f}, Class {}: Accuracy: {:.2f}%, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}".format(
+                    phase, epoch_loss, i, accuracy_all[-1], recall_all[-1], precision_all[-1], f1_all[-1], auc_all[-1]
+                ),
+                logger,
+            )
+
+        accuracy = np.mean(accuracy_all)
+        recall = np.mean(recall_all)
+        precision = np.mean(precision_all)
+        f1 = np.mean(f1_all)
+        auc = np.mean(auc_all)
+
+        log_or_print(
+            "{} Loss: {:.4f}, Accuracy_Average: {:.2f}%, Recall_Average: {:.4f}, Precision_Average: {:.4f}, F1_Average: {:.4f}, AUC_average: {:.4f}".format(
+                phase, epoch_loss, accuracy, recall, precision, f1, auc
+            ),
+            logger,
+        )
+
+    if writer:
+        writer.add_scalar("Loss/" + phase, epoch_loss, epoch)
         if n_classes <= 2:
-            accuracy = accuracy_score(
-                target_scores, (predicted_scores > threshold).astype(float)
-            )
-            recall = recall_score(
-                target_scores, (predicted_scores > threshold).astype(float)
-            )
-            precision = precision_score(
-                target_scores, (predicted_scores > threshold).astype(float)
-            )
-            f1 = f1_score(target_scores, (predicted_scores > threshold).astype(float))
-            auc = roc_auc_score(target_scores, predicted_scores)
-            log_or_print(
-                "{} Loss: {:.4f}, Accuracy: {:.2f}%, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}".format(
-                    phase, epoch_loss, accuracy, recall, precision, f1, auc
-                ),
-                logger,
-            )
-            if writer:
-                writer.add_scalar("Loss/" + phase, epoch_loss, epoch)
-                writer.add_scalar("Metrics/Accuracy_" + phase, accuracy, epoch)
-                writer.add_scalar("Metrics/Recall_" + phase, recall, epoch)
-                writer.add_scalar("Metrics/Precision_" + phase, precision, epoch)
-                writer.add_scalar("Metrics/F1_" + phase, f1, epoch)
-                writer.add_scalar("Metrics/AUC_" + phase, auc, epoch)
+            writer.add_scalar("Metrics/Accuracy_" + phase, accuracy, epoch)
+            writer.add_scalar("Metrics/Recall_" + phase, recall, epoch)
+            writer.add_scalar("Metrics/Precision_" + phase, precision, epoch)
+            writer.add_scalar("Metrics/F1_" + phase, f1, epoch)
+            writer.add_scalar("Metrics/AUC_" + phase, auc, epoch)
         else:
-            # calculate the tpr, tnr, fpr, fnr for each class
-            accuracy_all = []
-            recall_all = []
-            precision_all = []
-            f1_all = []
-            auc_all = []
-            for i in range(predicted_scores.shape[1]):
-                accuracy_all.append(
-                    accuracy_score(
-                        target_scores[:, i],
-                        (predicted_scores[:, i] > threshold).astype(float),
-                    )
-                )
-                recall_all.append(
-                    recall_score(
-                        target_scores[:, i],
-                        (predicted_scores[:, i] > threshold).astype(float),
-                    )
-                )
-                precision_all.append(
-                    precision_score(
-                        target_scores[:, i],
-                        (predicted_scores[:, i] > threshold).astype(float),
-                    )
-                )
-                f1_all.append(
-                    f1_score(
-                        target_scores[:, i],
-                        (predicted_scores[:, i] > threshold).astype(float),
-                    )
-                )
-                auc_all.append(
-                    roc_auc_score(target_scores[:, i], predicted_scores[:, i])
-                )
-                log_or_print(
-                    "{} Loss: {:.4f}, Accuracy: {:.2f}%, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}".format(
-                        phase,
-                        epoch_loss,
-                        accuracy_all[i],
-                        recall_all[i],
-                        precision_all[i],
-                        f1_all[i],
-                        auc_all[i],
-                    ),
-                    logger,
-                )
-            accuracy = np.mean(accuracy_all)
-            recall = np.mean(recall_all)
-            precision = np.mean(precision_all)
-            f1 = np.mean(f1_all)
-            auc = np.mean(auc_all)
-            log_or_print(
-                "{} Loss: {:.4f}, Accuracy_Average: {:.2f}%, Recall_Average: {:.4f}, Precision_Average: {:.4f}, F1_Average: {:.4f}, AUC_average: {:.4f}".format(
-                    phase, epoch_loss, accuracy, recall, precision, f1, auc
-                ),
-                logger,
-            )
+            writer.add_scalar("Metrics/Accuracy_Average_" + phase, accuracy, epoch)
+            writer.add_scalar("Metrics/Recall_Average_" + phase, recall, epoch)
+            writer.add_scalar("Metrics/Precision_Average_" + phase, precision, epoch)
+            writer.add_scalar("Metrics/F1_Average_" + phase, f1, epoch)
+            writer.add_scalar("Metrics/AUC_Average_" + phase, auc, epoch)
+
+        metrics = {
+            "Accuracy": accuracy,
+            "Recall": recall,
+            "Precision": precision,
+            "F1": f1,
+            "AUC": auc,
+        }
+        return metrics
+
+def log_or_print(message, logger, use_print=True):
+    if logger:
+        logger.info(message)
+    if use_print:
+        print(message)
 
 
 def evaluate_mat(predicted, target, method):
@@ -372,6 +395,56 @@ def undersample_dataset(train_set, target_attr="y", random_state=42):
         return UndersampledDataset(undersampled_dataset)
 
 
+def oversample_dataset(train_set, target_attr="y", random_state=42):
+    """
+    Oversample minority classes in a PyTorch Geometric dataset to balance class distribution.
+
+    Args:
+        train_set: torch_geometric.data.Dataset or list of Data objects
+        target_attr (str): Attribute name for the labels (default: "y")
+        random_state (int): Random seed for reproducibility
+
+    Returns:
+        Oversampled dataset with balanced class distribution
+    """
+    # Get all labels
+    all_labels = []
+    for data in train_set:
+        all_labels.append(data[target_attr].item())
+    all_labels = np.array(all_labels)
+
+    # Count class frequencies
+    unique_labels, counts = np.unique(all_labels, return_counts=True)
+    max_count = counts.max()
+
+    # Get indices for each class
+    balanced_indices = []
+    for label in unique_labels:
+        label_indices = np.where(all_labels == label)[0]
+        # Oversample to the size of the largest class
+        oversampled_indices = resample(
+            label_indices, replace=True, n_samples=max_count, random_state=random_state
+        )
+        balanced_indices.extend(oversampled_indices)
+
+    oversampled_dataset = [train_set[i] for i in balanced_indices]
+
+    if isinstance(train_set, PyGDataset):
+        class OversampledDataset(PyGDataset):
+            def __init__(self, dataset_list):
+                super(OversampledDataset, self).__init__()
+                self.data_list = dataset_list
+
+            def len(self):
+                return len(self.data_list)
+
+            def get(self, idx):
+                return self.data_list[idx]
+
+        return OversampledDataset(oversampled_dataset)
+
+    return oversampled_dataset
+
 def weighted_sample(dataset, sample_type):
     if sample_type == "oversample":
         n_samples = dataset.y.shape[0]
@@ -397,3 +470,102 @@ def get_spectral_embedding(adj, d):
     res = emb.fit_transform(adj_)
     x = torch.from_numpy(res).float().cuda()
     return x
+
+
+
+def plot_edge_weight(edge_weight, edge_mask, fold, best_metric, save_name=None, suffix="_masked"):
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+    # --- Load and merge ROI metadata ---
+    df_glasser = pd.read_excel("dataset/raw/Glasser_ROI_w_FN.xlsx")
+    df_extra = pd.read_csv("dataset/raw/roi_labels.csv", header=None)
+    df_extra.columns = ['LABEL']
+    df_extra['NETWORK'] = 'Subcortical'
+    # only last 19 rows are subcortical
+    df_extra = df_extra.iloc[-19:]
+
+    df_info = pd.concat([df_glasser[['LABEL', 'NETWORK']], df_extra], ignore_index=True)
+
+    # --- Sort by network ---
+    df_sorted = df_info.sort_values(by="NETWORK")
+    labels_ordered = df_sorted["LABEL"].tolist()
+    networks = df_sorted["NETWORK"].tolist()
+
+    # --- Reorder matrices ---
+    label_to_idx = {label: i for i, label in enumerate(df_info["LABEL"])}
+    reorder_indices = [label_to_idx[label] for label in labels_ordered]
+
+    edge_weight_reordered = edge_weight[reorder_indices][:, reorder_indices]
+    edge_mask_reordered = edge_mask[reorder_indices][:, reorder_indices]
+    ##########
+    masked_weights = (edge_weight_reordered).detach().cpu().numpy()
+
+    # # --- Plot heatmap ---
+    # plt.figure(figsize=(16, 14))
+    # ax = sns.heatmap(masked_weights, cmap="YlGnBu", xticklabels=False, yticklabels=False, cbar=True)
+    # ax.collections[0].set_clim(0.6, 1.2)
+    # # cbar fontsize
+    # cbar = ax.collections[0].colorbar
+    # cbar.ax.tick_params(labelsize=20)
+    plt.style.use("default")  # Use default matplotlib style
+    fig, ax = plt.subplots(figsize=(16, 14))
+    if 1 - edge_weight.mean() > edge_weight.mean(): # closer to 1
+        norm = colors.TwoSlopeNorm(vmin=0, vcenter=(masked_weights).max()/2, vmax=(masked_weights).max())
+        cmap = plt.get_cmap("Blues")
+    else:
+        norm = colors.TwoSlopeNorm(vmin=(masked_weights).min(), vcenter=1, vmax=(masked_weights).max())
+        cmap = plt.get_cmap("coolwarm")
+    newcolors = cmap(np.linspace(0, 1, 256))  # upper half
+    new_cmap = ListedColormap(newcolors)
+    # newcmp = ListedColormap(newcolors)
+    im = ax.imshow(masked_weights, interpolation="nearest", cmap=new_cmap, norm=norm)
+    cbar = plt.colorbar(im, ax=ax)
+    cbar.ax.tick_params(labelsize=20)
+    # no axes ticks
+    ax.set_xticks([])
+    ax.set_yticks([])
+    # borderline thickness
+    ax.spines['top'].set_linewidth(1.5)
+    ax.spines['bottom'].set_linewidth(1.5)
+    ax.spines['left'].set_linewidth(1.5)
+    ax.spines['right'].set_linewidth(1.5)
+    
+
+    # --- Group boundaries ---
+    group_names = []
+    group_positions = []
+    boundaries = []
+    prev = networks[0]
+    start = 0
+
+    for i, net in enumerate(networks + ["END"]):
+        if net != prev:
+            group_names.append(prev)
+            group_positions.append((start + i - 1) / 2)
+            boundaries.append(i)
+            start = i
+            prev = net
+
+    # --- Add labels ---
+    for name, pos in zip(group_names, group_positions):
+        plt.text(-5, pos, name, va='center', ha='right', fontsize=18)
+    for name, pos in zip(group_names, group_positions):
+        plt.text(pos, len(networks) + 2, name, va='top', ha='center', fontsize=18, rotation=90)
+
+    # --- Adaptive line color ---
+    mean_val = masked_weights.mean()
+    line_color = 'black' if mean_val > 0.001 else 'white'
+    for b in boundaries[:-1]:
+        plt.axhline(b, color=line_color, linewidth=2, linestyle=(0, (6, 6)), alpha=1)
+        plt.axvline(b, color=line_color, linewidth=2, linestyle=(0, (6, 6)), alpha=1)
+
+    # --- Title & Save ---
+    avg_weight = edge_weight.mean()
+    plt.title(f"Fold {fold} | AUC: {best_metric:.4f} | Avg weight: {avg_weight:.8f}", fontsize=20)
+    # plt.subplots_adjust(bottom=0.25)
+    plt.tight_layout()
+    plt.savefig(f"plot/edge_weights_fold{fold}_{suffix}.png")
+    plt.close()

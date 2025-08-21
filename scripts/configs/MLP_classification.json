@@ -12,7 +12,8 @@
     "n_vars": 1,
     "activation": "relu",
     "readout": "mean",
-    "additional_feature": 0
+    "additional_feature": 0,
+    "layer_distill_weights": [[[0.1, 0.1]], [0.3,0.3], [0.7,0.7]]
   }
 }
 

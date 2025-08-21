@@ -1,81 +1,65 @@
-# !/bin/bash
+#!/bin/bash
 
+# List of data files (without .pkl suffix)
+data_files=("SC_FC_adhd_question" "SC_FC_anxiety_question" "SC_FC_att_question" "SC_FC_ocd_question")
 
-# node
-for seed in 0 1 2 3
+# Function to get GPU memory usage
+get_gpu_load() {
+    local gpu_id=$1
+    nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i "$gpu_id"
+}
+
+# Function to choose GPU with lowest memory usage
+choose_gpu_with_least_load() {
+    gpu_count=$(nvidia-smi --list-gpus | wc -l)
+    min_load=$(get_gpu_load 0)
+    chosen_gpu=0
+
+    for ((gpu_id = 0; gpu_id < gpu_count; gpu_id++)); do
+        load=$(get_gpu_load $gpu_id)
+        if ((load < min_load)); then
+            min_load=$load
+            chosen_gpu=$gpu_id
+        fi
+    done
+
+    echo "$chosen_gpu"
+}
+
+# Loop through each data file
+for data_name in "${data_files[@]}"
 do
-    for modality in "FC"
+    # Auto-detect number of labels from the data file
+    label_count=$(python -c "
+import pickle
+with open('./dataset/processed/${data_name}.pkl', 'rb') as f:
+    d = pickle.load(f)
+print(len(d[0]['label']))
+")
+
+    echo "Detected $label_count labels in $data_name"
+
+    # Loop through each label
+    for ((label_index = 0; label_index < $label_count; label_index++))
     do
-        for c in Nan 
-        do
-            for d in Nan
-            do 
-                for e in Nan
-                do
-                    # Function to get GPU utilization for a given GPU ID
-                    get_gpu_load() {
-                        local gpu_id=$1
-                        local load=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i "$gpu_id")
-                        printf "%d" "$load"
-                        echo "$load"
-                    }
+        # Select GPU with least load
+        chosen_gpu=$(choose_gpu_with_least_load)
+        export CUDA_VISIBLE_DEVICES=$chosen_gpu
+        echo "Selected GPU $chosen_gpu for $data_name label $label_index"
 
-                    # Function to choose the GPU with the least load
-                    choose_gpu_with_least_load() {
-                        gpu_count=$(nvidia-smi --list-gpus | wc -l)
-                        if [ $gpu_count -eq 0 ]; then
-                            echo "No GPUs available."
-                            exit 1
-                        fi
+        # Log and output file
+        info="Data: ${data_name}, Label: ${label_index}"
+        echo "Starting ${info}"
+        output_file="results/bash_logs/${data_name}_label_${label_index}.log"
 
-                        # Initialize variables
-                        min_load=$(get_gpu_load 0)
-                        chosen_gpu=""
+        # Launch training
+        nohup python scripts/main_brain.py \
+            --max_epochs 30 \
+            --data_name $data_name \
+            --label_index $label_index \
+            --device cuda:0 > $output_file 2>&1 &
 
-                        # Loop through available GPUs
-                        for ((gpu_id = 0; gpu_id < $gpu_count; gpu_id++)); do
-                            load=$(get_gpu_load $gpu_id)
-                            if [ -z "$load" ]; then
-                                printf "Unable to determine GPU load for GPU %d.\n" $gpu_id
-                                continue
-                            fi
-
-                            if ((load <= min_load)); then
-                                min_load=$load
-                                chosen_gpu=$gpu_id
-                            fi
-                        done
-
-                        echo "$chosen_gpu"
-                    }
-
-                    # Choose GPU with the least load
-                    chosen_gpu=$(choose_gpu_with_least_load)
-
-                    if [ -z "$chosen_gpu" ]; then
-                        echo "No available GPUs or unable to determine GPU load."
-                        exit 1
-                    fi
-
-
-                    echo "Selected GPU: $chosen_gpu"
-
-                    # Set the CUDA_VISIBLE_DEVICES environment variable to restrict execution to the chosen GPU
-                    export CUDA_VISIBLE_DEVICES=$chosen_gpu
-
-
-                    info=": seed: ${seed}"
-
-                    echo "Start ${info}"
-                    output_file="logs/seed_${seed}.txt"
-
-                    nohup python scripts/main_brain.py \
-                        --seed $seed > $output_file 2>&1 &
-                    pid=$!
-                    wait $pid
-                    # sleep 30
-                done
-            done
-        done
+        pid=$!
+        wait $pid
     done
 done

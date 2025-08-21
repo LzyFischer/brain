@@ -35,7 +35,15 @@ def train_epoch(model, optimizer, device, data_loader, epoch, task_type="regress
     for iter, sample_i in enumerate((data_loader)):
         optimizer.zero_grad()
         sample_i = sample_i.to(device)
-        batch_scores = model(sample_i)
+        outputs = model(sample_i)
+        # if is tuple
+        if isinstance(outputs, tuple):
+            batch_scores, extra_loss, att_FCs, att_SCs = outputs
+        else:
+            batch_scores = outputs
+            extra_loss = 0
+            att_FCs = None
+            att_SCs = None
 
         # Compute the loss
         if task_type == "regression":
@@ -47,7 +55,7 @@ def train_epoch(model, optimizer, device, data_loader, epoch, task_type="regress
         else:
             raise ValueError("Invalid task type. Choose from 'regression' or 'classification'.")
         
-            
+        loss += extra_loss
         loss.backward()
         optimizer.step()
 
@@ -72,9 +80,35 @@ def evaluate_network(model, device, data_loader, epoch, task_type="regression", 
     predicted_scores = []
     target_scores = []
 
+    att_FCs_list = None
+    att_SCs_list = None
     with torch.no_grad():
         for iter, sample_i in enumerate(data_loader):
-            batch_scores = model(sample_i.to(device))
+            outputs = model(sample_i.to(device))
+            # if is tuple
+            if isinstance(outputs, tuple):
+                batch_scores, extra_loss, att_FCs, att_SCs = outputs
+                if epoch == args.max_epochs - 1:
+                    # mask: ground truth == 1
+                    mask = (sample_i.y.view(-1) == 1)   # (B,)
+
+                    if mask.any():
+                        att_FCs_sel = [att[mask] for att in att_FCs]  # att_FCs 是 list[Tensor(B,...)]
+                        att_SCs_sel = [att[mask] for att in att_SCs]
+
+                        if att_FCs_list is None:  # 初始化
+                            att_FCs_list = att_FCs_sel
+                            att_SCs_list = att_SCs_sel
+                        else:  # 拼接
+                            att_FCs_list = [torch.cat([old, new], dim=0) 
+                                            for old, new in zip(att_FCs_list, att_FCs_sel)]
+                            att_SCs_list = [torch.cat([old, new], dim=0) 
+                                            for old, new in zip(att_SCs_list, att_SCs_sel)]
+            else:
+                batch_scores = outputs
+                extra_loss = 0
+                att_FCs = None
+                att_SCs = None
 
             if task_type == "regression":
                 loss = weighted_mse_loss(batch_scores, sample_i.y, weight_score)
@@ -89,9 +123,16 @@ def evaluate_network(model, device, data_loader, epoch, task_type="regression", 
             target_scores.append(sample_i.y.cpu().detach().numpy())
 
     epoch_test_loss /= (iter + 1)
-    utils.log_metrics(epoch_test_loss, predicted_scores, target_scores, task_type, phase, epoch, writer, logger)
+    metrics = utils.log_metrics(epoch_test_loss, predicted_scores, target_scores, task_type, phase, epoch, writer, logger)
 
-    return epoch_test_loss
+    if att_FCs_list is not None and epoch == args.max_epochs-1:
+        att_FCs_list = torch.cat(att_FCs_list, dim=0)
+        att_SCs_list = torch.cat(att_SCs_list, dim=0)
+        # save the attention weights
+        np.savez(f"results/attention_weights/{args.data_name}.npz", 
+                 att_FCs=att_FCs_list.cpu().numpy(), att_SCs=att_SCs_list.cpu().numpy())
+
+    return epoch_test_loss, metrics
 
 
 

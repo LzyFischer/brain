@@ -9,6 +9,7 @@
 # Age classification GNN experiments
 import argparse
 import utils
+from tqdm import tqdm
 import os
 from os.path import join as pj
 from os.path import abspath
@@ -20,6 +21,7 @@ import time
 import torch.optim.lr_scheduler as lr_scheduler
 from torch.utils.tensorboard import SummaryWriter
 import utils.utils as utils
+from torch_geometric.explain import Explainer, CaptumExplainer, GNNExplainer
 from train.train import (
     train_epoch,
     evaluate_network,
@@ -27,10 +29,12 @@ from train.train import (
     evaluate_network_anomaly_detection,
 )
 import sys
+from models.explain_model import BrainCFExplainer, SurrogateGCN
 
 sys.path.append(os.path.dirname((os.path.abspath(__file__))))
 sys.path.append(os.path.dirname(os.path.dirname((os.path.abspath(__file__)))))
 import pdb
+from torch_geometric.data import Data
 
 from scripts.datasets.Brain_dataset import Brain
 from torch_geometric.loader import DataLoader
@@ -42,14 +46,22 @@ from imblearn.under_sampling import RandomUnderSampler
 
 import wandb
 import numpy as np
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
 from sklearn.metrics import roc_auc_score
 import torch.nn as nn
+
+from sklearn.model_selection import KFold
+from utils.utils import plot_edge_weight
+
 
 
 def main(args):
 
     now = str(time.strftime("%Y_%m_%d_%H_%M"))
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device(args.device if torch.cuda.is_available() else "cpu")
     # set random seed for reproducing results
     if args.seed:
         utils.seed_it(args.seed)
@@ -109,127 +121,192 @@ def main(args):
         task=args.task,
         x_attributes=args.x_attributes,
         args=args,
+        rawdata_path=f"./dataset/processed/{args.data_name}.pkl"
     )
     print("Dataset length: ", len(dataset))
 
-    # split datasets
-    train_test_split = 0.6
-    test_val_split = 0.8
-    train_set, val_set, test_set = (
-        dataset[: int(train_test_split * len(dataset))],
-        dataset[
-            int(train_test_split * len(dataset)) : int(test_val_split * len(dataset))
-        ],
-        dataset[int(test_val_split * len(dataset)) :],
-    )
-    train_set = utils.undersample_dataset(train_set)
-    # Prepare the dataloaders
-    train_dataloader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True)
-    val_dataloader = DataLoader(val_set, batch_size=64, shuffle=False)
-    test_dataloader = DataLoader(test_set, batch_size=64, shuffle=False)
-    logger.info("#" * 60)
+    """
+    Dataset definition:
+    1. 5 cross validation folds without validation set
+    Training:
+    1. only Train 3 folds (0, 1, 2)
+    start with 
+    for fold in range(3):
+    """
 
-    # Define the model
-    model = load_model(config, args)
-    model.to(device)
-    logger.info(model)
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+    kf = KFold(n_splits=5, shuffle=True, random_state=args.seed)
+    folds = list(kf.split(dataset))
 
-    # Training preparation
-    scheduler = lr_scheduler.ReduceLROnPlateau(
-        optimizer, mode="min", factor=0.5, patience=10
-    )
-    min_test_loss = 1e12
-    early_stopping = utils.EarlyStopping(tolerance=10, min_delta=0)
+    test_results = []
+    for fold in range(args.num_run):  # Only train on fold 0, 1, 2
+        logger.info(f"{'#' * 20} Fold {fold} {'#' * 20}")
 
-    criterion = nn.BCEWithLogitsLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+        train_indices, test_indices = folds[fold]
+        train_subset = dataset[train_indices]
+        test_subset = dataset[test_indices]
+        
+        # under sample the train dataset
+        train_subset = utils.undersample_dataset(train_subset)
+        # train_subset = utils.oversample_dataset(train_subset)
 
-    # Training
-    for epoch in range(args.max_epochs):
-        epoch_loss_train, optimizer = train_epoch(
-            model,
-            optimizer,
-            device,
-            data_loader=train_dataloader,
-            epoch=epoch,
-            task_type=args.task,
-            logger=logger,
-            writer=writer,
-            weight_score=args.weight_score,
-            args=args,
-        )
-        epoch_loss_val = evaluate_network(
-            model,
-            device,
-            val_dataloader,
-            epoch,
-            task_type=args.task,
-            logger=logger,
-            phase="Val",
-            writer=writer,
-            weight_score=args.weight_score,
-            args=args,
-        )
-        epoch_loss_test = evaluate_network(
-            model,
-            device,
-            test_dataloader,
-            epoch,
-            task_type=args.task,
-            logger=logger,
-            phase="Test",
-            writer=writer,
-            weight_score=args.weight_score,
-            args=args,
-        )
-        # scheduler.step(epoch_loss_val)
+       # Create PyG DataLoaders
+        train_loader = DataLoader(train_subset, batch_size=args.batch_size, shuffle=True)
+        test_loader = DataLoader(test_subset, batch_size=64, shuffle=False)
 
-        writer.add_scalar("LR", optimizer.param_groups[0]["lr"], epoch)
-        writer.add_scalars(
-            main_tag="Loss/epoch_losses",
-            tag_scalar_dict={
-                "Train": epoch_loss_train,
-                "Val": epoch_loss_val,
-                "Test": epoch_loss_test,
-            },
-            global_step=epoch,
-        )
+        # Model setup
+        model = load_model(config, args)
+        model.to(device)
+        logger.info(model)
 
-        # scheduler.step(epoch_loss_train)
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="min", factor=0.5, patience=10)
+        early_stopping = utils.EarlyStopping(tolerance=10, min_delta=0)
 
-        # save the best model
-        epoch_loss_test = epoch_loss_train
-        if epoch_loss_test < min_test_loss:
-            min_test_loss = epoch_loss_test
-            checkpoint = {
-                "model": model.state_dict(),
-                "optimizer": optimizer.state_dict(),
-            }
+        # Training loop
+        best_metric = 0
+        for epoch in range(args.max_epochs):
+            epoch_loss_train, optimizer = train_epoch(
+                model=model,
+                optimizer=optimizer,
+                device=device,
+                data_loader=train_loader,
+                epoch=epoch,
+                task_type=args.task,
+                logger=logger,
+                writer=writer,
+                weight_score=args.weight_score,
+                args=args,
+            )
 
-        early_stopping(epoch_loss_train, epoch_loss_val)
-        if early_stopping.early_stop:
-            logger.info("We are at epoch: {}".format(epoch))
-            break
+            epoch_loss_test, metrics = evaluate_network(
+                model=model,
+                device=device,
+                data_loader=test_loader,
+                epoch=epoch,
+                task_type=args.task,
+                logger=logger,
+                phase="Test",
+                writer=writer,
+                weight_score=args.weight_score,
+                args=args,
+            )
+            metric = metrics[args.final_metric]
 
-    writer.close()
-    model_save_dir = pj(abspath("scripts/results"), save_name + ".pth")
-    torch.save(checkpoint, model_save_dir)
+            writer.add_scalar("LR", optimizer.param_groups[0]["lr"], epoch)
+            writer.add_scalars(
+                main_tag=f"Loss/epoch_losses_fold{fold}",
+                tag_scalar_dict={
+                    "Train": epoch_loss_train,
+                    "Test": epoch_loss_test,
+                },
+                global_step=epoch,
+            )
+
+            # Save best model
+            if metric > best_metric:
+                best_metric = metric
+                checkpoint = {
+                    "model": model.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                }
+
+            early_stopping(epoch_loss_train, epoch_loss_test)
+            if early_stopping.early_stop:
+                logger.info(f"Early stopping at epoch {epoch} for fold {fold}")
+                break
+        
+        test_results.append(best_metric)
+        
+        writer.close()
+        model_save_dir = pj(abspath("scripts/results"), f"{save_name}_fold{fold}.pth")
+        torch.save(checkpoint, model_save_dir)
+
+
+
+
+        #### Plot feature importance
+        # learnable_part = model.learnable_weights
+        # # plot the weigth
+        # import matplotlib.pyplot as plt
+        # plt.style.use("default")
+        # x = np.arange(0, len(learnable_part))
+        # y = learnable_part.detach().cpu().numpy()
+        # x_masked = x[model.node_mask.cpu().numpy() == 1]
+        # y_masked = y[model.node_mask.cpu().numpy() == 1]
+        # x_unmasked = x[model.node_mask.cpu().numpy() == 0]
+        # y_unmasked = y[model.node_mask.cpu().numpy() == 0]
+        # plt.scatter(x_masked, y_masked, s=15, alpha=0.7, label=f"fold {fold} auc {best_metric:.4f} avg {np.mean(y_masked):.4f} masked")
+        # plt.scatter(x_unmasked, y_unmasked, s=15, alpha=0.7, label=f"fold {fold} auc {best_metric:.4f} avg {np.mean(y_unmasked):.4f} unmasked")
+        # plt.xlabel("Node index")
+        # plt.ylabel("Learnable weight")
+        # plt.tight_layout()
+        # plt.legend()
+        # plt.savefig(f"learnable_weights_fold{fold}.png")
+        # plt.close()
+
+
+        # plot the edge weight in heatmap
+        
+        # edge_weight = model.learnable_edge_weights
+        # edge_weight = (edge_weight + edge_weight.T) / 2
+        # edge_weight = torch.sigmoid(model.learnable_edge_weights) * 2 
+        # np.save(f"results/learnable_weight/{args.data_name}_fold{fold}.npy", edge_weight.detach().cpu().numpy())
+        # plot_edge_weight(edge_weight, model.edge_mask, fold, best_metric, save_name, suffix=args.data_name)
+        
+        # # plot the weigth
+        # import matplotlib.pyplot as plt
+        # plt.style.use("default")
+        # plt.figure(figsize=(10, 8))
+        # plt.imshow((model.edge_mask * edge_weight).detach().cpu().numpy(), cmap='hot', interpolation='nearest')
+        # plt.colorbar()
+        # # lim
+        # plt.clim(0.6, 1.2)
+        # plt.title(f"fold {fold} auc {best_metric:.4f} avg {(model.edge_mask * edge_weight).sum() / model.edge_mask.sum()}")
+        # plt.xlabel("Node index")
+        # plt.ylabel("Node index")
+        # plt.tight_layout()
+        # plt.savefig(f"edge_weights_fold{fold}_masked.png")
+        # plt.close()
+        # plt.figure(figsize=(10, 8))
+        # plt.imshow(((1 - model.edge_mask) *edge_weight).detach().cpu().numpy(), cmap='hot', interpolation='nearest')
+        # plt.colorbar()
+        # plt.title(f"fold {fold} auc {best_metric:.4f} avg {((1 - model.edge_mask)*edge_weight).sum() / (1 - model.edge_mask).sum()}")
+        # plt.xlabel("Node index")
+        # plt.ylabel("Node index")
+        # plt.tight_layout()
+        # plt.savefig(f"edge_mask_fold{fold}_unmasked.png")
+        # plt.close()
+
+
+
+
+    
+    # log the test results per fold
+    for i, result in enumerate(test_results):
+        logger.info(f"Fold {i}: {result:.4f}")
+    logger.info(f"Average test result: {np.mean(test_results):.4f} ± {np.std(test_results):.4f}")
+    print(f"{np.mean(test_results):.4f}")
+    print(f"{np.std(test_results):.4f}")
+    
+
+    # # print top 20 weights
+    # top_20 = torch.topk(learnable_part, 20)
+    # logger.info(top_20)
 
 
 if __name__ == "__main__":
     torch.cuda.empty_cache()
     parser = argparse.ArgumentParser(description="HCDP Classification")
     parser.add_argument("--lr", default=1e-3, type=float, help="learning rate")
-    parser.add_argument("--batch_size", default=128, type=int, help="batch size")
+    parser.add_argument("--batch_size", default=32, type=int, help="batch size")
     parser.add_argument(
-        "--max_epochs", default=50, type=int, help="max number of epochs"
+        "--max_epochs", default=30, type=int, help="max number of epochs"
     )
     parser.add_argument("--L2", default=1e-6, type=float, help="L2 regularization")
     parser.add_argument("--dropout", default=0.1, help="dropout rate")
-    parser.add_argument("--seed", default=42, type=int, help="random seed")
+    parser.add_argument("--seed", default=215, type=int, help="random seed")
     parser.add_argument(
-        "--config", default="GIN_classification", help="config file name"
+        "--config", default="Transformers_classification", help="config file name"
     )
     parser.add_argument(
         "--task",
@@ -264,18 +341,33 @@ if __name__ == "__main__":
         choices=["FC", "SC", "Both"],
     )
     parser.add_argument("--task_idx", default=0, help="pretrain", type=int)
-<<<<<<< HEAD
-    parser.add_argument("--loss_type", default="focal", help="loss type", choices=["bce", "focal", "weighted_bce"])
-=======
     parser.add_argument(
         "--loss_type",
         default="focal",
         help="loss type",
-        choices=["bce", "focal", "weighted_bce"],
+        choices=["bce", "focal", "weighted_bce", "multi_class"],
     )
->>>>>>> bc734eb944ecbb7956b04e7b9beecd2dbaa914f7
     parser.add_argument("--focal_gamma", default=2, help="focal gamma")
-
+    parser.add_argument("--label_index", default=None, type=int, help="y attribute")
+    parser.add_argument(
+        "--final_metric",
+        default="AUC",
+        help="final metric for evaluation",
+        choices=["AUC", "Accuracy", "F1", "Precision", "Recall"],
+    )
+    parser.add_argument(
+        "--num_run", default=3, type=int, help="number of runs for cross validation"
+    )
+    parser.add_argument(
+        "--device",
+        default="cuda:0",
+        type=str,
+        help="device to use for training (default: cuda:0)",
+    )
+    parser.add_argument("--data_name", type=str, default="disease_ADHD", help="Unique ID for the dataset")
+    parser.add_argument("--threshold", type=float, default=0, help="Threshold for FC edge construction")
+    parser.add_argument("--original_edge_weight", type=lambda x: x.lower() == "true", default=True)
+    parser.add_argument("--attention_weights_path", type=float, default=0.5, help="Edge weight for FC edge construction")
     args = parser.parse_args()
 
     if args.if_pos_weight == "True":
@@ -284,3 +376,8 @@ if __name__ == "__main__":
         args.if_pos_weight = False
 
     main(args)
+
+
+
+
+

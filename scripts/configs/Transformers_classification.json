@@ -1,0 +1,18 @@
+{
+  "model": "BrainTransformers",
+  "model_save_suffix": "BrainTransformers",
+  "pretrain": false,
+  "pretrain_model_name": "hcdp/pretrained/2023_10_30_19_10dglHCP_GCN_GCN_regression_30.pth",
+  "net_params": {
+    "num_layers": 3,
+    "in_channels": 379,
+    "hidden_channels": 64,
+    "out_channels": 1,
+    "dropout": 0.2,
+    "n_vars": 5,
+    "activation": "relu",
+    "readout": "mean",
+    "additional_feature": 0
+  }
+}
+
