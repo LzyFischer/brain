@@ -66,7 +66,6 @@ def train_epoch(model, optimizer, device, data_loader, epoch, task_type="regress
         predicted_scores.append(batch_scores.cpu().detach().numpy())
         target_scores.append(sample_i.y.cpu().detach().numpy())
 
-
     epoch_loss /= (iter + 1)
     utils.log_metrics(epoch_loss, predicted_scores, target_scores, task_type, 'Train', epoch, writer, logger)
 
@@ -93,17 +92,15 @@ def evaluate_network(model, device, data_loader, epoch, task_type="regression", 
                     mask = (sample_i.y.view(-1) == 1)   # (B,)
 
                     if mask.any():
-                        att_FCs_sel = [att[mask] for att in att_FCs]  # att_FCs 是 list[Tensor(B,...)]
-                        att_SCs_sel = [att[mask] for att in att_SCs]
+                        att_FCs_sel = att_FCs[mask]
+                        att_SCs_sel = att_SCs[mask]
 
                         if att_FCs_list is None:  # 初始化
                             att_FCs_list = att_FCs_sel
                             att_SCs_list = att_SCs_sel
                         else:  # 拼接
-                            att_FCs_list = [torch.cat([old, new], dim=0) 
-                                            for old, new in zip(att_FCs_list, att_FCs_sel)]
-                            att_SCs_list = [torch.cat([old, new], dim=0) 
-                                            for old, new in zip(att_SCs_list, att_SCs_sel)]
+                            att_FCs_list = torch.cat((att_FCs_list, att_FCs_sel), dim=0)
+                            att_SCs_list = torch.cat((att_SCs_list, att_SCs_sel), dim=0)
             else:
                 batch_scores = outputs
                 extra_loss = 0
@@ -121,16 +118,17 @@ def evaluate_network(model, device, data_loader, epoch, task_type="regression", 
             batch_scores = F.sigmoid(batch_scores)
             predicted_scores.append(batch_scores.cpu().detach().numpy())
             target_scores.append(sample_i.y.cpu().detach().numpy())
-
+    
     epoch_test_loss /= (iter + 1)
     metrics = utils.log_metrics(epoch_test_loss, predicted_scores, target_scores, task_type, phase, epoch, writer, logger)
 
     if att_FCs_list is not None and epoch == args.max_epochs-1:
-        att_FCs_list = torch.cat(att_FCs_list, dim=0)
-        att_SCs_list = torch.cat(att_SCs_list, dim=0)
         # save the attention weights
         np.savez(f"results/attention_weights/{args.data_name}.npz", 
                  att_FCs=att_FCs_list.cpu().numpy(), att_SCs=att_SCs_list.cpu().numpy())
+        G_FC = np.stack([model.layers[i].apf_FC.Wg.cpu().detach().numpy() for i in range(len(model.layers))], axis=1)
+        G_SC = np.stack([model.layers[i].apf_SC.Wg.cpu().detach().numpy() for i in range(len(model.layers))], axis=1)
+        np.savez(f"results/attention_weights/{args.data_name}_G.npz", G_FC=G_FC, G_SC=G_SC)
 
     return epoch_test_loss, metrics
 

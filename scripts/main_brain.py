@@ -300,11 +300,11 @@ if __name__ == "__main__":
     parser.add_argument("--lr", default=1e-3, type=float, help="learning rate")
     parser.add_argument("--batch_size", default=32, type=int, help="batch size")
     parser.add_argument(
-        "--max_epochs", default=30, type=int, help="max number of epochs"
+        "--max_epochs", default=15, type=int, help="max number of epochs"
     )
     parser.add_argument("--L2", default=1e-6, type=float, help="L2 regularization")
     parser.add_argument("--dropout", default=0.1, help="dropout rate")
-    parser.add_argument("--seed", default=215, type=int, help="random seed")
+    parser.add_argument("--seed", default=1, type=int, help="random seed")
     parser.add_argument(
         "--config", default="Transformers_classification", help="config file name"
     )
@@ -364,7 +364,7 @@ if __name__ == "__main__":
         type=str,
         help="device to use for training (default: cuda:0)",
     )
-    parser.add_argument("--data_name", type=str, default="disease_ADHD", help="Unique ID for the dataset")
+    parser.add_argument("--data_name", type=str, default="disease_Anx_nosf", help="Unique ID for the dataset")
     parser.add_argument("--threshold", type=float, default=0, help="Threshold for FC edge construction")
     parser.add_argument("--original_edge_weight", type=lambda x: x.lower() == "true", default=True)
     parser.add_argument("--attention_weights_path", type=float, default=0.5, help="Edge weight for FC edge construction")
