@@ -56,35 +56,47 @@ class AdaptivePriorFusion(nn.Module):
     """
     def __init__(self, N: int, emb_dim: int, num_priors: int,
                  use_free: bool = True, tau: float = 2.0,
-                 init_scale: float = 1e-2):
+                 init_scale: float = 1e-2, use_global: bool = True,
+                 use_personal: bool = True):
         super().__init__()
         self.N = N
         self.P0 = num_priors
         self.use_free = use_free
         self.P = num_priors + (1 if use_free else 0)
         self.tau = tau
+        self.use_global = use_global
+        self.use_personal = use_personal
 
         # Global matrices per prior(+free)
-        self.Wg = nn.Parameter(torch.randn(self.P, N, N) * init_scale)
+        if use_global:
+            self.Wg = nn.Parameter(torch.randn(self.P, N, N) * init_scale)
+            self.scale_g = nn.Parameter(torch.zeros(self.P))
+        else:
+            self.register_parameter("Wg", None)
+            self.register_parameter("scale_g", None)
 
         # Hypernet to produce u_p(z) and α_p(z)
-        hid = max(64, emb_dim // 2)
-        self.hyper_uA = nn.Sequential(
-            nn.Linear(emb_dim, hid), nn.ReLU(),
-            nn.Linear(hid, self.P * N)
-        )
-        self.hyper_uB = nn.Sequential(
-            nn.Linear(emb_dim, hid), nn.ReLU(),
-            nn.Linear(hid, self.P * N)
-        )
-        self.hyper_alpha = nn.Sequential(
-            nn.Linear(emb_dim, hid), nn.ReLU(),
-            nn.Linear(hid, self.P), nn.Tanh()  # α ∈ (-1,1)
-        )
-
-        # Optional learned scales for stability
-        self.scale_g = nn.Parameter(torch.zeros(self.P))
-        self.scale_r = nn.Parameter(torch.zeros(self.P))
+        if not use_personal:
+            self.register_parameter("hyper_uA", None)
+            self.register_parameter("hyper_uB", None)
+            self.register_parameter("hyper_alpha", None)
+            self.register_parameter("scale_r", None)
+        else:
+            hid = max(64, emb_dim // 2)
+            self.hyper_uA = nn.Sequential(
+                nn.Linear(emb_dim, hid), nn.ReLU(),
+                nn.Linear(hid, self.P * N)
+            )
+            self.hyper_uB = nn.Sequential(
+                nn.Linear(emb_dim, hid), nn.ReLU(),
+                nn.Linear(hid, self.P * N)
+            )
+            self.hyper_alpha = nn.Sequential(
+                nn.Linear(emb_dim, hid), nn.ReLU(),
+                nn.Linear(hid, self.P), nn.Tanh()  # α ∈ (-1,1)
+            )
+            # Optional learned scales for stability
+            self.scale_r = nn.Parameter(torch.zeros(self.P))
 
     @staticmethod
     def _sym_zero_diag(M):
@@ -117,24 +129,30 @@ class AdaptivePriorFusion(nn.Module):
         P_bin = (P > 0).to(z.dtype)
 
         # Global term (sym+zero_diag; bounded via tanh; scaled)
-        Wg = self._sym_zero_diag(self.Wg)                 # (P,N,N)
-        Wg = torch.tanh(Wg) * (1.0 + self.scale_g.view(-1,1,1))
-        Wg_b = Wg.unsqueeze(0).expand(B, -1, -1, -1)      # (B,P,N,N)
+        if self.use_global:
+            Wg = self._sym_zero_diag(self.Wg)                 # (P,N,N)
+            Wg = torch.tanh(Wg) * (1.0 + self.scale_g.view(-1,1,1))
+            Wg_b = Wg.unsqueeze(0).expand(B, -1, -1, -1)      # (B,P,N,N)
+        else:
+            Wg_b = 0.0
 
-        # Personalized rank-1 from subject embedding z̄
-        z_bar = z.mean(dim=1)                             # (B,H)
-        U_A = self.hyper_uA(z_bar).view(B, self.P, N)   # (B,P,N)
-        U_B = self.hyper_uB(z_bar).view(B, self.P, N)   # (B,P,N)
-        U_A = F.normalize(U_A, dim=-1)
-        U_B = F.normalize(U_B, dim=-1)
-        alpha = self.hyper_alpha(z_bar) * (1.0 + self.scale_r)  # (B,P)
+        if self.use_personal:
+            # Personalized rank-1 from subject embedding z̄
+            z_bar = z.mean(dim=1)                             # (B,H)
+            U_A = self.hyper_uA(z_bar).view(B, self.P, N)   # (B,P,N)
+            U_B = self.hyper_uB(z_bar).view(B, self.P, N)   # (B,P,N)
+            U_A = F.normalize(U_A, dim=-1)
+            U_B = F.normalize(U_B, dim=-1)
+            alpha = self.hyper_alpha(z_bar) * (1.0 + self.scale_r)  # (B,P)
 
-        Wr_ab = torch.einsum("bpn,bpm->bpnm", U_A, U_B)     # uA uB^T  (B,P,N,N)
-        Wr_ba = torch.einsum("bpn,bpm->bpnm", U_B, U_A)     # uB uA^T
-        Wr = 0.5 * (Wr_ab + Wr_ba)
-        Wr = alpha.view(B, self.P, 1, 1) * Wr
-        Wr = 0.5 * (Wr + Wr.transpose(-1, -2))  # 若你始终想保持对称，保留这一行
-        Wr = Wr - torch.diag_embed(torch.diagonal(Wr, dim1=-2, dim2=-1))  # 零对角
+            Wr_ab = torch.einsum("bpn,bpm->bpnm", U_A, U_B)     # uA uB^T  (B,P,N,N)
+            Wr_ba = torch.einsum("bpn,bpm->bpnm", U_B, U_A)     # uB uA^T
+            Wr = 0.5 * (Wr_ab + Wr_ba)
+            Wr = alpha.view(B, self.P, 1, 1) * Wr
+            Wr = 0.5 * (Wr + Wr.transpose(-1, -2))  # 若你始终想保持对称，保留这一行
+            Wr = Wr - torch.diag_embed(torch.diagonal(Wr, dim1=-2, dim2=-1))  # 零对角
+        else:
+            Wr = 0.0
 
         # Mask per prior & sum
         S = (Wg_b + Wr) * P_bin                           # (B,P,N,N)
@@ -142,7 +160,7 @@ class AdaptivePriorFusion(nn.Module):
 
         # Temperature & sigmoid gate
         logits = torch.clamp(S / self.tau, -6.0, 6.0)
-        G = torch.tanh(logits)                         # (B,N,N)
+        G = torch.sigmoid(logits)                         # (B,N,N)
         if mode == "mask":
             return G
         elif mode == "gate":
@@ -166,10 +184,14 @@ class DualTransformerLayer(nn.Module):
         N_nodes: int = 379,       # ← ROI 数
         apf_tau: float = 2.0,
         apf_use_free: bool = True,
+        disable_mutual_distill: bool = False,
+        use_global: bool = True,
+        use_personal: bool = True,
     ):
         super().__init__()
         self.H = hidden_dim
         self.dw = distill_weights
+        self.disable_md = disable_mutual_distill
 
         # –– Layer‑norms ––––––––––––––––––––––––––––––––––––––––––––––– #
         self.ln_attn_FC = nn.LayerNorm(hidden_dim)
@@ -197,11 +219,13 @@ class DualTransformerLayer(nn.Module):
         # ---- NEW: APF 替换 WeightGenerator ----
         self.apf_FC = AdaptivePriorFusion(
             N=N_nodes, emb_dim=hidden_dim, num_priors=num_priors,
-            use_free=apf_use_free, tau=apf_tau
+            use_free=apf_use_free, tau=apf_tau, use_global=use_global,
+            use_personal=use_personal
         )
         self.apf_SC = AdaptivePriorFusion(
             N=N_nodes, emb_dim=hidden_dim, num_priors=num_priors,
-            use_free=apf_use_free, tau=apf_tau
+            use_free=apf_use_free, tau=apf_tau, use_global=use_global,
+            use_personal=use_personal
         )
 
         # Distillation heads
@@ -266,6 +290,9 @@ class DualTransformerLayer(nn.Module):
         x_SC_new = attn_out_SC + ffn_SC
 
         # 5) 互蒸馏（与你原逻辑一致）
+        if self.disable_md:
+            distill_loss = torch.zeros((), device=x_FC_new.device, dtype=x_FC_new.dtype)
+            return x_FC_new, x_SC_new, distill_loss, G_FC, G_SC
         wf, ws = self.dw
         proj_FC = self.dist_in_FC(x_FC_new)
         proj_SC = self.dist_in_SC(x_SC_new)
@@ -334,25 +361,39 @@ class BrainTransformers(nn.Module):
         # Input embedding & stacked dual‑transformers                        #
         self.input_proj = nn.Linear(net_params["in_channels"], H)
         # one distill‑weight pair per layer (you can also register nn.Parameter)
-        layer_dw = torch.tensor([
-            [0.1, 0.9],   # 第 1 层
-            [0.4, 0.6],   # 第 2 层
-            [0.7, 0.3],   # 第 3 层
-        ])
+        # layer_dw = torch.tensor([
+        #     [0.1, 0.9],   # 第 1 层
+        #     [0.4, 0.6],   # 第 2 层
+        #     [0.7, 0.3],   # 第 3 层
+        # ])
+        init_dw = torch.tensor([
+            [0.5, 0.5],   # layer 1
+            [0.5, 0.5],   # layer 2
+            [0.5, 0.5],   # layer 3
+        ], dtype=torch.float32, device=args.device)
+
+        self.layer_dw = nn.Parameter(init_dw) 
+
+        disable_md = bool(net_params.get("disable_mutual_distill", getattr(args, "disable_mutual_distill", False)))
+        use_global = bool(net_params.get("use_global", getattr(args, "use_global", False)))
+        use_personal = bool(net_params.get("use_personal", getattr(args, "use_personal", True)))
 
         self.layers = nn.ModuleList(
             [
                 DualTransformerLayer(
                     hidden_dim=H,
                     num_heads=8,
-                    distill_weights=layer_dw[i],   # 每层用不同的权重
+                    distill_weights=self.layer_dw[i],   # 每层用不同的权重
                     dropout=dropout,
                     num_priors=num_priors,
                     N_nodes=N_nodes,
                     apf_tau=2.0,
                     apf_use_free=True,
+                    disable_mutual_distill=disable_md,
+                    use_global=use_global,
+                    use_personal=use_personal,
                 )
-                for i in range(len(layer_dw))
+                for i in range(len(self.layer_dw))
             ]
         )
 

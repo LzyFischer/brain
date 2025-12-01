@@ -137,7 +137,7 @@ def main(args):
     kf = KFold(n_splits=5, shuffle=True, random_state=args.seed)
     folds = list(kf.split(dataset))
 
-    test_results = []
+    test_results = {}  # filled after 1st evaluate call in fold 0
     for fold in range(args.num_run):  # Only train on fold 0, 1, 2
         logger.info(f"{'#' * 20} Fold {fold} {'#' * 20}")
 
@@ -147,6 +147,8 @@ def main(args):
         
         # under sample the train dataset
         train_subset = utils.undersample_dataset(train_subset)
+        test_subset = utils.undersample_dataset(test_subset)
+        # test_subset = utils.oversample_dataset(test_subset)
         # train_subset = utils.oversample_dataset(train_subset)
 
        # Create PyG DataLoaders
@@ -163,7 +165,10 @@ def main(args):
         early_stopping = utils.EarlyStopping(tolerance=10, min_delta=0)
 
         # Training loop
-        best_metric = 0
+        # will be filled after first evaluation call, based on returned metric keys
+        best_by_metric = None
+        best_epoch_by_metric = None
+        best_ckpt_by_metric = {}  # optional: keep separate checkpoint per metric
         for epoch in range(args.max_epochs):
             epoch_loss_train, optimizer = train_epoch(
                 model=model,
@@ -190,37 +195,56 @@ def main(args):
                 weight_score=args.weight_score,
                 args=args,
             )
-            metric = metrics[args.final_metric]
 
+            # bootstrap metric trackers on first pass using the keys we actually get back
+            if best_by_metric is None:
+                metric_names = list(metrics.keys())  # e.g., ["AUC","Accuracy","F1","Precision","Recall"]
+                best_by_metric = {m: float("-inf") for m in metric_names}
+                best_epoch_by_metric = {m: -1 for m in metric_names}
+                # also initialize the cross-fold aggregator once
+                if not test_results:
+                    test_results = {m: [] for m in metric_names}
+
+            # update per-metric bests (and optional per-metric checkpoints)
+            for m, val in metrics.items():
+                if val > best_by_metric[m]:
+                    best_by_metric[m] = val
+                    best_epoch_by_metric[m] = epoch
+                    best_ckpt_by_metric[m] = {
+                        "model": model.state_dict(),
+                        "optimizer": optimizer.state_dict(),
+                        "epoch": epoch,
+                        "metric": m,
+                        "value": val,
+                    }
+
+            # (keep your existing scalar logging)
+            metric = metrics[args.final_metric]  # if you still want a single “driving” metric for LR plots
             writer.add_scalar("LR", optimizer.param_groups[0]["lr"], epoch)
             writer.add_scalars(
                 main_tag=f"Loss/epoch_losses_fold{fold}",
-                tag_scalar_dict={
-                    "Train": epoch_loss_train,
-                    "Test": epoch_loss_test,
-                },
+                tag_scalar_dict={"Train": epoch_loss_train, "Test": epoch_loss_test},
                 global_step=epoch,
             )
-
-            # Save best model
-            if metric > best_metric:
-                best_metric = metric
-                checkpoint = {
-                    "model": model.state_dict(),
-                    "optimizer": optimizer.state_dict(),
-                }
 
             early_stopping(epoch_loss_train, epoch_loss_test)
             if early_stopping.early_stop:
                 logger.info(f"Early stopping at epoch {epoch} for fold {fold}")
                 break
         
-        test_results.append(best_metric)
-        
-        writer.close()
-        model_save_dir = pj(abspath("scripts/results"), f"{save_name}_fold{fold}.pth")
-        torch.save(checkpoint, model_save_dir)
+        # log per-metric best for this fold
+        for m in best_by_metric:
+            logger.info(f"[Fold {fold}] Best {m}: {best_by_metric[m]:.4f} @ epoch {best_epoch_by_metric[m]}")
+            test_results[m].append(best_by_metric[m])
 
+        # OPTIONAL: save separate best checkpoint per metric
+        # save_dir_base = pj(abspath("scripts/results"), f"{save_name}_fold{fold}")
+        # for m, ckpt in best_ckpt_by_metric.items():
+        #     torch.save(ckpt, f"{save_dir_base}_best_{m}.pth")
+
+        writer.close()
+        # model_save_dir = pj(abspath("scripts/results"), f"{save_name}_fold{fold}.pth")
+        # torch.save(checkpoint, model_save_dir)
 
 
 
@@ -277,16 +301,12 @@ def main(args):
         # plt.savefig(f"edge_mask_fold{fold}_unmasked.png")
         # plt.close()
 
-
-
-
     
-    # log the test results per fold
-    for i, result in enumerate(test_results):
-        logger.info(f"Fold {i}: {result:.4f}")
-    logger.info(f"Average test result: {np.mean(test_results):.4f} ± {np.std(test_results):.4f}")
-    print(f"{np.mean(test_results):.4f}")
-    print(f"{np.std(test_results):.4f}")
+    for m, vals in test_results.items():
+        mean_v = np.mean(vals)
+        std_v = np.std(vals)
+        logger.info(f"{m}: {mean_v:.4f} ± {std_v:.4f}")
+        print(f"{m}: {mean_v:.4f} ± {std_v:.4f}")
     
 
     # # print top 20 weights
@@ -304,7 +324,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--L2", default=1e-6, type=float, help="L2 regularization")
     parser.add_argument("--dropout", default=0.1, help="dropout rate")
-    parser.add_argument("--seed", default=1, type=int, help="random seed")
+    parser.add_argument("--seed", default=2, type=int, help="random seed")
     parser.add_argument(
         "--config", default="Transformers_classification", help="config file name"
     )
@@ -356,7 +376,7 @@ if __name__ == "__main__":
         choices=["AUC", "Accuracy", "F1", "Precision", "Recall"],
     )
     parser.add_argument(
-        "--num_run", default=3, type=int, help="number of runs for cross validation"
+        "--num_run", default=1, type=int, help="number of runs for cross validation"
     )
     parser.add_argument(
         "--device",
@@ -368,6 +388,12 @@ if __name__ == "__main__":
     parser.add_argument("--threshold", type=float, default=0, help="Threshold for FC edge construction")
     parser.add_argument("--original_edge_weight", type=lambda x: x.lower() == "true", default=True)
     parser.add_argument("--attention_weights_path", type=float, default=0.5, help="Edge weight for FC edge construction")
+    parser.add_argument("--disable_mutual_distill", default=False,
+                    help="If set, remove mutual distillation for ablation.")
+    parser.add_argument("--use_global", default=True,
+                    help="If set, use global mask for classification.")
+    parser.add_argument("--use_personal", default=True,
+                    help="Ablation: remove APF personalized rank-1 mask (hypernet).")
     args = parser.parse_args()
 
     if args.if_pos_weight == "True":

@@ -181,3 +181,11 @@ outputs/
 *.onnx
 *.tflite
 
+# R 
+R/*
+!R/*.R
+!R/glasser.xlsx
+
+# logs
+logs/
+

@@ -14,7 +14,7 @@ from scipy import sparse as sp
 import dgl
 import torch.nn.functional as F
 from models.model_loss import classification_loss
-from sklearn.metrics import roc_curve, auc, roc_auc_score, recall_score, precision_score
+from sklearn.metrics import roc_curve, auc, roc_auc_score, recall_score, precision_score, confusion_matrix
 from sklearn.preprocessing import label_binarize
 from sklearn.metrics import (
     mean_squared_error,
@@ -130,6 +130,26 @@ def seed_it(seed):
     torch.manual_seed(seed)
 
 
+def _safe_confusion_binary(y_true, y_pred_bin):
+    """Return tn, fp, fn, tp for binary labels; robust if a class is missing."""
+    con = confusion_matrix(y_true, y_pred_bin, labels=[0, 1])
+    if con.shape != (2, 2):
+        full = np.zeros((2, 2), dtype=int)
+        for i in range(con.shape[0]):
+            for j in range(con.shape[1]):
+                full[i, j] = con[i, j]
+        con = full
+    tn, fp, fn, tp = con.ravel()
+    return tn, fp, fn, tp
+
+def compute_sensitivity_specificity(y_true, y_pred_bin):
+    """Compute (sensitivity, specificity) for binary predictions."""
+    tn, fp, fn, tp = _safe_confusion_binary(y_true, y_pred_bin)
+    spe = tn / (tn + fp) if (tn + fp) > 0 else 0.0
+    sen = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    return sen, spe
+
+
 def log_metrics(
     epoch_loss,
     predicted_scores,
@@ -141,6 +161,11 @@ def log_metrics(
     logger,
     multi_label=True,
 ):
+    """
+    Extended: now also logs Sensitivity (TPR) and Specificity (TNR).
+    - Binary: single pair (sen, spe)
+    - Multi-label: per-class + macro-average
+    """
     if task_type == "regression":
         rmse = evaluate_mat(predicted_scores, target_scores, method="RMSE")
         mae = evaluate_mat(predicted_scores, target_scores, method="MAE")
@@ -152,107 +177,139 @@ def log_metrics(
             for idx, (r, m) in enumerate(zip(rmse, mae)):
                 writer.add_scalar("Metrics/RMSE_{}_{}".format(idx, phase), r, epoch)
                 writer.add_scalar("Metrics/MAE_{}_{}".format(idx, phase), m, epoch)
+        return
 
-    elif task_type == "classification":
-        # Convert predicted scores to class label
-        predicted_scores = np.concatenate(predicted_scores, axis=0)
-        target_scores = np.concatenate(target_scores, axis=0)
-        threshold = 0.5
+    # ---------- Classification ----------
+    predicted_scores = np.concatenate(predicted_scores, axis=0)
+    target_scores = np.concatenate(target_scores, axis=0)
+    threshold = 0.5
+    n_classes = predicted_scores.shape[1]
 
-        n_classes = predicted_scores.shape[1]
-
-    if n_classes <= 2:  # Binary classification
-        mask = (target_scores != -1).astype(bool)  # Create mask
+    if n_classes <= 2:  # Binary
+        mask = (target_scores != -1).astype(bool)
         target_masked = target_scores[mask]
         predicted_masked = predicted_scores[mask]
 
-        if target_masked.size == 0: #Handle case where all targets are masked.
-          log_or_print(f"{phase} Loss: {epoch_loss:.4f}, All targets masked", logger)
-          if writer:
-            writer.add_scalar("Loss/" + phase, epoch_loss, epoch)
-          return
+        if target_masked.size == 0:
+            log_or_print(f"{phase} Loss: {epoch_loss:.4f}, All targets masked", logger)
+            if writer:
+                writer.add_scalar("Loss/" + phase, epoch_loss, epoch)
+            return
 
-        accuracy = accuracy_score(target_masked, (predicted_masked > threshold).astype(float))
-        recall = recall_score(target_masked, (predicted_masked > threshold).astype(float))
-        precision = precision_score(target_masked, (predicted_masked > threshold).astype(float))
-        f1 = f1_score(target_masked, (predicted_masked > threshold).astype(float))
+        y_pred_bin = (predicted_masked > threshold).astype(float)
+
+        accuracy = accuracy_score(target_masked, y_pred_bin)
+        recall = recall_score(target_masked, y_pred_bin)
+        precision = precision_score(target_masked, y_pred_bin)
+        f1 = f1_score(target_masked, y_pred_bin)
         try:
             auc = roc_auc_score(target_masked, predicted_masked)
-        except ValueError:
+        except Exception:
             auc = 0.0
 
+        # Sensitivity/Specificity
+        sen, spe = compute_sensitivity_specificity(target_masked, y_pred_bin)
+
         log_or_print(
-            "{} Loss: {:.4f}, Accuracy: {:.2f}%, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}".format(
-                phase, epoch_loss, accuracy, recall, precision, f1, auc
+            "{} Loss: {:.4f}, Acc: {:.2f}%, Sen: {:.4f}, Spe: {:.4f}, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}".format(
+                phase, epoch_loss, accuracy, sen, spe, recall, precision, f1, auc
             ),
             logger,
         )
 
-    else:  # Multi-label classification
-        accuracy_all = []
-        recall_all = []
-        precision_all = []
-        f1_all = []
-        auc_all = []
-        if target_scores.squeeze().ndim == 1:
-            target_scores = label_binarize(target_scores, classes=np.arange(n_classes))
-
-        for i in range(n_classes):
-            mask = (target_scores[:, i] != -1).astype(bool)  # Create mask for each label
-            target_masked = target_scores[mask, i]
-            predicted_masked = predicted_scores[mask, i]
-
-            if target_masked.size == 0: #Handle case where all targets are masked.
-              log_or_print(f"{phase} Loss: {epoch_loss:.4f}, Class {i}, All targets masked", logger)
-              continue
-
-            accuracy_all.append(accuracy_score(target_masked, (predicted_masked > threshold).astype(float)))
-            recall_all.append(recall_score(target_masked, (predicted_masked > threshold).astype(float)))
-            precision_all.append(precision_score(target_masked, (predicted_masked > threshold).astype(float)))
-            f1_all.append(f1_score(target_masked, (predicted_masked > threshold).astype(float)))
-            auc_all.append(roc_auc_score(target_masked, predicted_masked))
-
-            log_or_print(
-                "{} Loss: {:.4f}, Class {}: Accuracy: {:.2f}%, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}".format(
-                    phase, epoch_loss, i, accuracy_all[-1], recall_all[-1], precision_all[-1], f1_all[-1], auc_all[-1]
-                ),
-                logger,
-            )
-
-        accuracy = np.mean(accuracy_all)
-        recall = np.mean(recall_all)
-        precision = np.mean(precision_all)
-        f1 = np.mean(f1_all)
-        auc = np.mean(auc_all)
-
-        log_or_print(
-            "{} Loss: {:.4f}, Accuracy_Average: {:.2f}%, Recall_Average: {:.4f}, Precision_Average: {:.4f}, F1_Average: {:.4f}, AUC_average: {:.4f}".format(
-                phase, epoch_loss, accuracy, recall, precision, f1, auc
-            ),
-            logger,
-        )
-
-    if writer:
-        writer.add_scalar("Loss/" + phase, epoch_loss, epoch)
-        if n_classes <= 2:
+        if writer:
+            writer.add_scalar("Loss/" + phase, epoch_loss, epoch)
             writer.add_scalar("Metrics/Accuracy_" + phase, accuracy, epoch)
+            writer.add_scalar("Metrics/Sensitivity_" + phase, sen, epoch)
+            writer.add_scalar("Metrics/Specificity_" + phase, spe, epoch)
             writer.add_scalar("Metrics/Recall_" + phase, recall, epoch)
             writer.add_scalar("Metrics/Precision_" + phase, precision, epoch)
             writer.add_scalar("Metrics/F1_" + phase, f1, epoch)
             writer.add_scalar("Metrics/AUC_" + phase, auc, epoch)
-        else:
+
+        metrics = {
+            "Accuracy": accuracy,
+            "Sensitivity": sen,
+            "Specificity": spe,
+            "Recall": recall,
+            "Precision": precision,
+            "F1": f1,
+            "AUC": auc,
+        }
+        return metrics
+
+    else:  # Multi-label / Multi-class (one-vs-rest)
+        acc_all, rec_all, pre_all, f1_all, auc_all = [], [], [], [], []
+        sen_all, spe_all = [], []
+        if target_scores.squeeze().ndim == 1:
+            target_scores = label_binarize(target_scores, classes=np.arange(n_classes))
+
+        for i in range(n_classes):
+            mask = (target_scores[:, i] != -1).astype(bool)
+            target_masked = target_scores[mask, i]
+            predicted_masked = predicted_scores[mask, i]
+
+            if target_masked.size == 0:
+                log_or_print(f"{phase} Loss: {epoch_loss:.4f}, Class {i}, All targets masked", logger)
+                continue
+
+            y_pred_bin = (predicted_masked > threshold).astype(float)
+
+            acc_all.append(accuracy_score(target_masked, y_pred_bin))
+            rec_all.append(recall_score(target_masked, y_pred_bin))
+            pre_all.append(precision_score(target_masked, y_pred_bin))
+            f1_all.append(f1_score(target_masked, y_pred_bin))
+            try:
+                auc_all.append(roc_auc_score(target_masked, predicted_masked))
+            except Exception:
+                auc_all.append(0.0)
+
+            # Sen/Spe
+            sen_i, spe_i = compute_sensitivity_specificity(target_masked, y_pred_bin)
+            sen_all.append(sen_i)
+            spe_all.append(spe_i)
+
+            log_or_print(
+                "{} Loss: {:.4f}, Class {}: Acc: {:.2f}%, Sen: {:.4f}, Spe: {:.4f}, Recall: {:.4f}, Precision: {:.4f}, F1: {:.4f}, AUC: {:.4f}".format(
+                    phase, epoch_loss, i, acc_all[-1], sen_i, spe_i, rec_all[-1], pre_all[-1], f1_all[-1], auc_all[-1]
+                ),
+                logger,
+            )
+
+        # Macro averages
+        accuracy = float(np.mean(acc_all)) if acc_all else 0.0
+        recall = float(np.mean(rec_all)) if rec_all else 0.0
+        precision = float(np.mean(pre_all)) if pre_all else 0.0
+        f1 = float(np.mean(f1_all)) if f1_all else 0.0
+        auc = float(np.mean(auc_all)) if auc_all else 0.0
+        sen = float(np.mean(sen_all)) if sen_all else 0.0
+        spe = float(np.mean(spe_all)) if spe_all else 0.0
+
+        log_or_print(
+            "{} Loss: {:.4f}, Acc_avg: {:.2f}%, Sen_avg: {:.4f}, Spe_avg: {:.4f}, Recall_avg: {:.4f}, Precision_avg: {:.4f}, F1_avg: {:.4f}, AUC_avg: {:.4f}".format(
+                phase, epoch_loss, accuracy, sen, spe, recall, precision, f1, auc
+            ),
+            logger,
+        )
+
+        if writer:
+            writer.add_scalar("Loss/" + phase, epoch_loss, epoch)
             writer.add_scalar("Metrics/Accuracy_Average_" + phase, accuracy, epoch)
+            writer.add_scalar("Metrics/Sensitivity_Average_" + phase, sen, epoch)
+            writer.add_scalar("Metrics/Specificity_Average_" + phase, spe, epoch)
             writer.add_scalar("Metrics/Recall_Average_" + phase, recall, epoch)
             writer.add_scalar("Metrics/Precision_Average_" + phase, precision, epoch)
             writer.add_scalar("Metrics/F1_Average_" + phase, f1, epoch)
             writer.add_scalar("Metrics/AUC_Average_" + phase, auc, epoch)
 
         metrics = {
-            "Accuracy": accuracy,
-            "Recall": recall,
-            "Precision": precision,
-            "F1": f1,
-            "AUC": auc,
+            "Accuracy_Average": accuracy,
+            "Sensitivity_Average": sen,
+            "Specificity_Average": spe,
+            "Recall_Average": recall,
+            "Precision_Average": precision,
+            "F1_Average": f1,
+            "AUC_Average": auc,
         }
         return metrics
 

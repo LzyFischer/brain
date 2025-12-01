@@ -65,7 +65,8 @@ def train_epoch(model, optimizer, device, data_loader, epoch, task_type="regress
         batch_scores = F.sigmoid(batch_scores) if task_type == "classification" else batch_scores
         predicted_scores.append(batch_scores.cpu().detach().numpy())
         target_scores.append(sample_i.y.cpu().detach().numpy())
-
+    
+    print(model.layer_dw)
     epoch_loss /= (iter + 1)
     utils.log_metrics(epoch_loss, predicted_scores, target_scores, task_type, 'Train', epoch, writer, logger)
 
