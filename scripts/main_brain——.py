@@ -31,9 +31,6 @@ from train.train import (
 import sys
 from models.explain_model import BrainCFExplainer, SurrogateGCN
 
-# Import Cross-GNN training utilities
-from train.train_cross import tensorize_subset, train_cross_epoch
-
 sys.path.append(os.path.dirname((os.path.abspath(__file__))))
 sys.path.append(os.path.dirname(os.path.dirname((os.path.abspath(__file__)))))
 import pdb
@@ -75,7 +72,7 @@ def main(args):
         config = json.load(f)
     # combine the config and args
 
-    config["dataset"] = args.dataset
+    config["dataset"] = args.data_name
     if args.dropout:
         config["net_params"]["dropout"] = args.dropout
     if args.x_attributes is None:
@@ -108,9 +105,9 @@ def main(args):
         os.makedirs(abspath("results/brain/loggers"))
 
     # print the config and args information
-    logger = utils.get_logger(name=save_name, path="results/loggers")
-    logger.info(args)
-    logger.info(config)
+    # logger = utils.get_logger(name=save_name, path="results/loggers")
+    # logger.info(args)
+    # logger.info(config)
 
     # define tensorboard for visualization of the training
     if not os.path.exists(abspath("results/runs")):
@@ -148,66 +145,13 @@ def main(args):
         train_subset = dataset[train_indices]
         test_subset = dataset[test_indices]
         
-        # Under‑sample the train and test subsets
+        # under sample the train dataset
         train_subset = utils.undersample_dataset(train_subset)
         test_subset = utils.undersample_dataset(test_subset)
         # test_subset = utils.oversample_dataset(test_subset)
         # train_subset = utils.oversample_dataset(train_subset)
 
-        # If the chosen model is CrossGNNBrain, we use a dedicated training loop
-        if config["model"] == "CrossGNNBrain":
-            # Create a simple validation split from the training subset (e.g. 10%)
-            n_total = len(train_subset)
-            n_val = max(1, int(0.1 * n_total))
-            # Randomly shuffle the training subset
-            train_list = list(train_subset)
-            import random as _random
-            _random.shuffle(train_list)
-            val_subset = train_list[:n_val]
-            core_train_subset = train_list[n_val:]
-
-            # Convert subsets to dense tensors for Cross-GNN
-            num_nodes = config["net_params"]["in_channels"]
-            train_x, train_y, _ = tensorize_subset(core_train_subset, device, num_nodes)
-            val_x, val_y, val_onehot = tensorize_subset(val_subset, device, num_nodes)
-            test_x, test_y, test_onehot = tensorize_subset(test_subset, device, num_nodes)
-            # Aggregate into the data tuple expected by train_cross_epoch
-            datas = (
-                train_x,
-                val_x,
-                test_x,
-                train_y,
-                val_y,
-                test_y,
-                val_onehot,
-                test_onehot,
-                2,  # num_classes for binary classification
-            )
-
-            # Initialise model and optimiser
-            model = load_model(config, args)
-            model.to(device)
-            logger.info(model)
-            optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-
-            # Res dictionary to collect best metrics for this fold
-            res = {}
-            # Train for the specified number of epochs
-            for epoch in range(args.max_epochs):
-                res, is_best, to_save = train_cross_epoch(epoch, model, optimizer, datas, res, args)
-            # Append results to cross‑fold aggregator
-            for m, v in res.items():
-                # Ensure the metric list exists before appending
-                if m not in test_results:
-                    test_results[m] = []
-                test_results[m].append(v)
-            # Close tensorboard writer for this fold
-            writer.close()
-            # Proceed to the next fold
-            continue
-
-        # Default training loop for other models using PyG DataLoaders
-        # Create PyG DataLoaders
+       # Create PyG DataLoaders
         train_loader = DataLoader(train_subset, batch_size=args.batch_size, shuffle=True)
         test_loader = DataLoader(test_subset, batch_size=64, shuffle=False)
 
@@ -287,7 +231,7 @@ def main(args):
             if early_stopping.early_stop:
                 logger.info(f"Early stopping at epoch {epoch} for fold {fold}")
                 break
-
+        
         # log per-metric best for this fold
         for m in best_by_metric:
             logger.info(f"[Fold {fold}] Best {m}: {best_by_metric[m]:.4f} @ epoch {best_epoch_by_metric[m]}")
@@ -402,7 +346,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--train_val_test", default=[0.6, 0.2, 0.2], help="train, val, test split"
     )
-    parser.add_argument("--dataset", default="dglHCP", help="dataset name")
+    # parser.add_argument("--dataset", default="dglHCP", help="dataset name")
     parser.add_argument("--sparse", default=30, type=int, help="sparsity for knn graph")
     parser.add_argument("--gl", default=False, help="graph learning beta")
     parser.add_argument("--weight_score", default=[0.5, 0.5], help="weight score")
@@ -432,7 +376,7 @@ if __name__ == "__main__":
         choices=["AUC", "Accuracy", "F1", "Precision", "Recall"],
     )
     parser.add_argument(
-        "--num_run", default=3, type=int, help="number of runs for cross validation"
+        "--num_run", default=1, type=int, help="number of runs for cross validation"
     )
     parser.add_argument(
         "--device",
@@ -450,14 +394,6 @@ if __name__ == "__main__":
                     help="If set, use global mask for classification.")
     parser.add_argument("--use_personal", default=True,
                     help="Ablation: remove APF personalized rank-1 mask (hypernet).")
-
-    # Hyperparameters specific to the Cross-GNN model.  These options are
-    # ignored for other models.
-    parser.add_argument("--channel", type=int, default=32, help="Hidden channel size for Cross-GNN")
-    parser.add_argument("--layer", type=int, default=2, help="Number of correspondence propagation layers in Cross-GNN")
-    parser.add_argument("--ab", type=int, default=0, help="Ablation switch for Cross-GNN (unused)")
-    parser.add_argument("--gru", type=int, default=1, help="Number of GRU layers per modality in Cross-GNN")
-    parser.add_argument("--alpha", type=float, default=0.8, help="Weight of distillation losses in Cross-GNN training")
     args = parser.parse_args()
 
     if args.if_pos_weight == "True":

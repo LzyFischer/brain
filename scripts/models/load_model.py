@@ -6,6 +6,7 @@ from models.GCN_pyg import GCN_pyg
 from models.MLP_pyg import MLP_pyg
 from models.Transformers import BrainTransformers
 from models.AutoEncoder import AE
+from models.CrossGNN import CrossGNNBrain
 import pdb
 
 def load_model(config, args):
@@ -19,4 +20,9 @@ def load_model(config, args):
         model = MLP(config['net_params'])
     elif config['model'] == 'BrainTransformers':
         model = BrainTransformers(config['net_params'], args)
+    elif config['model'] == 'CrossGNNBrain':
+        # Wrap the Cross-GNN architecture so it can consume PyG Data batches.
+        # ``net_params`` should at minimum contain ``in_channels`` and
+        # optionally ``num_classes``.
+        model = CrossGNNBrain(config['net_params'], args)
     return model

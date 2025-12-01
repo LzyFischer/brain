@@ -1,0 +1,10 @@
+{
+    "model": "CrossGNNBrain",
+    "model_save_suffix": "CrossGNN",
+    "pretrain": false,
+    "pretrain_model_name": "",
+    "net_params": {
+        "in_channels": 379,
+        "num_classes": 2
+    }
+}
